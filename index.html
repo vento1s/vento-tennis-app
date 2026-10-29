@@ -991,7 +991,7 @@ function viewHome(){
   if(show){const d=pd(show.date),ms=meetMatches(show.id),fin=ms.filter(done).length,isT=show.date===TODAY;
     h+=`<button class="mcard nextm" data-meet="${show.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
       <div class="mid"><span class="eyebrow" style="font-size:10px;letter-spacing:.2em">${isT?'Today':next?'Next Matchday':'Last Matchday'}</span><div class="mtitle">${esc(show.title||show.place||'매치데이')}</div><div class="mmeta">참가 ${attOf(show).length}명 · 경기 ${fin}/${ms.length}</div></div>${isT?'<span class="st today">TODAY</span>':next?`<span class="st up">D-${Math.round((pd(show.date)-pd(TODAY))/864e5)}</span>`:'<span class="st fin">FINAL</span>'}</button>`;
-  }else h+=`<button class="mcard nextm" data-act="new"><div class="mdate"><b>+</b></div><div class="mid"><div class="mtitle">다음 매치데이 만들기</div><div class="mmeta">${S.season} 시즌 ${sm.length}/${TARGET}회</div></div></button>`;
+  }
   h+=`<div class="tiles">
     <button class="tile" data-nav="feed"><span class="eyebrow">Matchday</span><b>매치데이</b><span class="ti">${IC.n_feed}</span><small>${sm.length}/${TARGET}회</small></button>
     <button class="tile" data-nav="season"><span class="eyebrow">Ranking</span><b>클럽 순위</b><span class="ti">${IC.n_rank}</span><small>P 순위표</small></button>
