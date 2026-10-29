@@ -373,6 +373,22 @@ details.edit[open] summary::after{content:" ⌄"}
 .tiles.t3 .tile .eyebrow{display:none}
 .tiles.t3 .tile b{font-size:15px}
 .hg-h em{font-style:normal;font-size:11.5px;font-weight:700;color:var(--blue);white-space:nowrap}
+.imgadd{display:grid;justify-items:center;gap:2px;height:auto;padding:12px;border-style:dashed;border-radius:16px}
+.imgadd svg{width:20px;height:20px}
+.imgadd small{font-size:11.5px;color:var(--muted);font-style:normal;font-weight:600}
+.imgdrop{display:grid;justify-items:center;gap:4px;padding:18px;border:2px dashed var(--line);border-radius:18px;cursor:pointer;color:var(--ink-2);text-align:center}
+.imgdrop svg{width:26px;height:26px;color:var(--blue)}
+.imgdrop small{font-size:12px;color:var(--muted)}
+.imgdrop img{max-height:180px;border-radius:12px;margin-top:6px}
+.imgdrop.has{padding:10px}
+.ii-status{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2);background:var(--field);padding:10px 12px;border-radius:12px}
+.spin.sm{width:18px;height:18px;border-width:2px;flex:none}
+.ii-list{display:grid;gap:6px}
+.ii-row{display:grid;grid-template-columns:22px 1fr 84px;gap:8px;align-items:center;background:var(--field);border-radius:12px;padding:6px 8px;position:relative}
+.ii-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--blue)}
+.ii-in{background:var(--card);border:1px solid var(--line);border-radius:9px;height:34px;padding:0 9px;min-width:0;font-weight:800;color:var(--ink)}
+.ii-row.dup{opacity:.7}
+.ii-dup{grid-column:2/-1;font-size:11px;color:var(--gold);font-weight:700}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -1235,6 +1251,66 @@ function sparkline(hist){
     <circle cx="${X(pts.length-1)}" cy="${Y(last)}" r="4.5" fill="${up?'#FFD400':'#FF7E6E'}" stroke="#131415" stroke-width="2"/>
     <text x="${pl}" y="${H-2}" fill="#8C959D" font-size="9" font-family="Roboto,sans-serif">첫 경기</text><text x="${W-pr}" y="${H-2}" text-anchor="end" fill="#8C959D" font-size="9" font-family="Roboto,sans-serif">최근</text></svg>`;
 }
+const SAMPLE_P=(async()=>{try{return window.claude&&window.claude.use?await window.claude.use('sample'):null}catch(e){return null}})();
+async function shrinkImage(file,max){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{
+  const k=Math.min(1,max/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);
+  cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);cv.toBlob(b=>b?res({blob:b,url:cv.toDataURL('image/jpeg',.7)}):rej(new Error('blob')),'image/jpeg',.85)};im.src=fr.result};fr.readAsDataURL(file)})}
+const IMG_PROMPT=`이 이미지는 테니스 클럽 멤버 명단을 캡처한 것입니다(카카오톡 단톡방 멤버 목록, 투표 결과, 출석표, 대진표 등).
+이미지에 보이는 사람 이름을 빠짐없이 찾아 주세요.
+규칙:
+1) name은 사람 이름만(예: 김태윤). 한국 이름이면 성+이름.
+2) 이름 옆에 붙은 별명이나 표시 이름(예: Vento, 심도, 개리)은 nick에 넣어요. 여러 사람에게 똑같이 붙은 모임 이름(예: 송사모)은 nick에 넣지 말고 group에 한 번만 적어요.
+3) 같은 사람은 한 번만.
+4) '나', '프로필', 버튼 글자, 날짜, 숫자, 채팅 내용 같은 UI 문구는 제외.
+반드시 JSON 하나로만 답하세요: {"people":[{"name":"김태윤","nick":"Vento"}],"group":"송사모"}`;
+function imgImportModal(){
+  let rows=[];
+  const exists=n=>S.members.some(m=>m.name===n||m.short===n);
+  openModal('이미지로 선수 등록',`<p class="hint" style="margin:0">카톡 명단이나 투표 결과 캡처를 올리면 Claude가 이름을 읽어 선수로 등록해요. 등록 전에 이름을 고치거나 뺄 수 있어요.</p>
+    <label class="imgdrop" for="ii-file" id="ii-drop">${IC.cam}<b>사진 선택</b><small>캡처 이미지 1장</small><img id="ii-prev" alt="" hidden></label><input type="file" accept="image/*" id="ii-file" hidden>
+    <div id="ii-status" class="ii-status" hidden></div><div id="ii-list" class="ii-list"></div>
+    <div class="row" id="ii-act" hidden><button class="btn-ghost" id="ii-all" style="flex:1">전체 선택</button><button class="btn-navy" id="ii-save" style="flex:2;width:auto">등록하기</button></div>`,el=>{
+    const st=el.querySelector('#ii-status'),list=el.querySelector('#ii-list'),act=el.querySelector('#ii-act');
+    const status=(html,spin)=>{st.hidden=!html;st.innerHTML=(spin?'<span class="spin sm"></span>':'')+html};
+    const draw=()=>{
+      list.innerHTML=rows.length?`<div class="between"><span class="lbl">인식한 이름 ${rows.length}명</span><span class="lbl">표시 이름</span></div>`+rows.map((r,i)=>`<div class="ii-row ${r.dup?'dup':''}"><input type="checkbox" id="ii-c${i}" ${r.on?'checked':''} aria-label="${esc(r.name)} 등록"><input class="ii-in" id="ii-n${i}" value="${esc(r.name)}" aria-label="이름"><input class="ii-in sh" id="ii-s${i}" value="${esc(r.short)}" aria-label="표시 이름">${r.dup?'<span class="ii-dup">이미 있음</span>':''}</div>`).join(''):'';
+      list.querySelectorAll('input[type=checkbox]').forEach((c,i)=>c.onchange=()=>{rows[i].on=c.checked;cnt()});
+      list.querySelectorAll('.ii-in').forEach(inp=>inp.oninput=()=>{const i=+inp.id.slice(5);if(inp.classList.contains('sh'))rows[i].short=inp.value;else rows[i].name=inp.value});
+      act.hidden=!rows.length;cnt();
+    };
+    const cnt=()=>{const n=rows.filter(r=>r.on).length;const b=el.querySelector('#ii-save');b.textContent=n?`${n}명 등록하기`:'등록할 선수를 골라 주세요';b.disabled=!n};
+    el.querySelector('#ii-file').onchange=async e=>{
+      const f=e.target.files&&e.target.files[0];if(!f)return;
+      rows=[];draw();
+      let img;try{img=await shrinkImage(f,1600)}catch(err){status('이 사진은 불러올 수 없어요. 다른 사진을 골라 주세요.');return}
+      const pv=el.querySelector('#ii-prev');pv.src=img.url;pv.hidden=false;el.querySelector('#ii-drop').classList.add('has');
+      const sample=await SAMPLE_P;
+      if(!sample){status('이미지 인식은 Claude 앱이나 claude.ai에서 이 앱을 열었을 때만 쓸 수 있어요. 지금은 이름을 하나씩 추가해 주세요.');return}
+      status('Claude가 이름을 읽는 중… (10~30초)',true);
+      try{
+        const out=await sample.json(IMG_PROMPT,{images:[img.blob]});
+        const ppl=(out&&Array.isArray(out.people)?out.people:[]).filter(p=>p&&p.name);
+        const grp=(out&&out.group||'').trim();
+        const seen=new Set();
+        rows=ppl.map(p=>{const name=String(p.name).trim();let nick=String(p.nick||'').trim();if(nick===grp)nick='';
+          const short=nick||(name.length===3&&/^[가-힣]+$/.test(name)?name.slice(1):name);const dup=exists(name)||exists(short);
+          return {name,short,on:!dup,dup}}).filter(r=>{if(!r.name||seen.has(r.name))return false;seen.add(r.name);return true});
+        status(rows.length?(grp?`모임 이름 "${esc(grp)}"은(는) 빼고 읽었어요.`:''):'이름을 찾지 못했어요. 이름이 잘 보이는 캡처로 다시 시도해 주세요.');
+        draw();
+      }catch(err){
+        const c=err&&err.code;
+        status(c==='not_granted'?'Claude 사용을 허용해야 이미지를 읽을 수 있어요.':c==='rate_limited'?'요청이 많아요. 잠시 뒤에 다시 시도해 주세요.':c==='images_unavailable'?'지금은 이미지를 보낼 수 없어요. 이름을 하나씩 추가해 주세요.':'이름을 읽지 못했어요. 다른 사진으로 다시 시도해 주세요.');
+      }
+    };
+    el.querySelector('#ii-all').onclick=()=>{const all=rows.every(r=>r.on);rows.forEach(r=>r.on=!all);draw()};
+    el.querySelector('#ii-save').onclick=()=>{
+      const pick=rows.filter(r=>r.on&&r.name.trim());if(!pick.length)return;
+      let order=S.members.reduce((t,m)=>Math.max(t,m.order||0),0);
+      closeModal();pick.forEach(r=>put('members',{id:uid(),name:r.name.trim(),short:(r.short||r.name).trim(),order:++order}));
+      toast(`${pick.length}명을 선수로 등록했어요.`);
+    };
+  });
+}
 function memberModal(id){
   const m=S.members.find(x=>x.id===id);const isNew=!m;const cur=m||{name:'',short:''};const adm=isAdmin();
   if(isNew&&!adm){adminLogin(()=>memberModal(null));return}
@@ -1256,8 +1332,10 @@ function memberModal(id){
     <div class="field"><span class="lbl">Full Name</span><label class="inp"><input id="m-name" type="text" value="${esc(cur.name)}" placeholder="예: 김태윤" aria-label="이름"></label></div>
     <div class="field"><span class="lbl">시작 P</span><label class="inp"><input id="m-r0" type="number" inputmode="numeric" value="${Number.isFinite(cur.rating0)?cur.rating0:P0}" aria-label="시작 포인트"></label><span class="hint">실력 차이가 크면 시작 점수를 다르게 줄 수 있어요. 기본 ${P0}.</span></div>
     <button class="btn-navy" id="m-save">${isNew?'추가':'저장'}</button>
+    ${isNew?`<button class="btn-ghost imgadd" id="m-img">${IC.cam}이미지로 한 번에 추가<small>카톡 명단 · 투표 · 대진표 캡처</small></button>`:''}
     ${isNew?'':`<div id="m-delbox"><button class="btn-danger" id="m-del">멤버 삭제</button></div>`}`;
   openModal(isNew?'멤버 추가':esc(dn(id)),`${stat}${adm?(isNew?form:`<details class="edit"><summary>정보 수정</summary><div class="edit-b">${form}</div></details>`):`<button class="link-back" data-act="login" style="justify-self:center">정보 수정은 관리자 로그인 후</button>`}`,el=>{
+    const mi=el.querySelector('#m-img');if(mi)mi.onclick=()=>{closeModal();imgImportModal()};
     const sv=el.querySelector('#m-save');if(!sv)return;
     sv.onclick=()=>{
       const name=el.querySelector('#m-name').value.trim(),short=el.querySelector('#m-short').value.trim();const r0=Math.round(+el.querySelector('#m-r0').value);
