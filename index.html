@@ -17,6 +17,7 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{background:var(--bg)}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent;word-break:keep-all;overflow-wrap:anywhere}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--navy)}
@@ -358,6 +359,20 @@ details.edit[open] summary::after{content:" ⌄"}
 .mvpb{font-family:var(--f-body)!important;font-size:19px!important;color:var(--gold)!important;padding-top:3px}
 .mtabs{background:rgba(0,0,0,.25)}
 .mtabs button[aria-pressed="true"]{background:var(--blue);color:var(--on-blue)}
+.club-ic{overflow:hidden}
+.club-ic.ph{background:var(--field)}
+.club-ic img{width:100%;height:100%;object-fit:cover;display:block}
+.club-ic.lg{width:72px;height:72px;border-radius:20px}
+.club-ic.lg svg{width:38px;height:38px}
+.photo-row{display:flex;gap:14px;align-items:center}
+.photo-btns{display:grid;gap:6px;min-width:0}
+.btn-ghost.sm{height:38px;padding:0 14px;font-size:13px;cursor:pointer}
+.tiles.t3{grid-template-columns:repeat(3,1fr)}
+.tiles.t3 .tile{min-height:0;padding:12px 12px 11px}
+.tiles.t3 .tile .ti{position:static;margin-bottom:4px;order:-1}
+.tiles.t3 .tile .eyebrow{display:none}
+.tiles.t3 .tile b{font-size:15px}
+.hg-h em{font-style:normal;font-size:11.5px;font-weight:700;color:var(--blue);white-space:nowrap}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -521,6 +536,7 @@ const IC={
   grid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg>',
   flame:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5c.6 3.2 4 5.2 4.8 8.6.9 3.8-1.6 8.4-4.8 8.4s-5.6-2.6-5.2-6c.3-2.4 1.9-3.6 2.4-5.3.5 1.5.4 2.8 1.6 3.6.7-3.2.3-6.1 1.2-9.3z"/></svg>',
   bolt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2L5 13.5h6L9.8 22 19 10h-6z"/></svg>',
+  cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"><path d="M4 8h3l1.6-2.5h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.4"/></svg>',
   trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.6 4M17 6h2.5a2.5 2.5 0 0 1-2.6 4M12 14v3M8 21l1.5-4h5L16 21"/></svg>'
 };
 
@@ -975,7 +991,7 @@ function viewClubs(){
   let h=`<div class="bhead"><span class="eyebrow">My Clubs</span><p class="big">내 클럽</p><p class="hint">들어갈 클럽을 고르세요. 클럽마다 선수, 매치데이, 순위, 관리자 비밀번호가 따로예요.</p></div><div class="clist">`;
   list.forEach(c=>{
     const n=RAW.members.filter(x=>clubOf(x)===c.id).length,ms=RAW.matches.filter(x=>clubOf(x)===c.id&&done(x)).length,ad=adminOf(c.id),cur=c.id===S.clubId;
-    h+=`<button class="ccard ${cur?'on':''}" data-club="${c.id}"><span class="club-ic sm">${IC[c.icon||'crown']||IC.crown}</span>
+    h+=`<button class="ccard ${cur?'on':''}" data-club="${c.id}">${clubPic(c,'sm')}
       <span class="cc-t"><b>${esc(c.name)}${c.region?` <i class="club-r">${esc(c.region)}</i>`:''}</b>${c.intro?`<small>${esc(c.intro)}</small>`:''}<small class="cc-st">선수 ${n}명 · 경기 ${ms}개</small>
       ${ad.hasPin?`<span class="cc-role ${ad.admin?'adm':''}">${ad.admin?'관리자':'회원'}</span>`:''}</span>
       <span class="cc-btn">${cur?'선택됨':'선택'}</span></button>`;
@@ -987,15 +1003,14 @@ function viewHome(){
   if(S.loading)return loadingView();
   const c=clubInfo(S.clubId);const sm=seasonMeets();const played=seasonMatches().filter(done).length;
   const ids=S.members.map(m=>m.id);const avg=ids.length?Math.round(ids.reduce((t,id)=>t+pOf(id),0)/ids.length):P0;
-  let h=`<div class="club"><div class="club-top"><span class="club-ic">${IC[c.icon||'crown']||IC.crown}</span><div class="club-t">${c.region?`<span class="club-r">${esc(c.region)}</span>`:''}<b>${esc(c.name)}</b>${c.intro?`<span>${esc(c.intro)}</span>`:''}</div><button class="mini" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button></div>
+  let h=`<div class="club"><div class="club-top">${clubPic(c)}<div class="club-t">${c.region?`<span class="club-r">${esc(c.region)}</span>`:''}<b>${esc(c.name)}</b>${c.intro?`<span>${esc(c.intro)}</span>`:''}</div><button class="mini" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button></div>
     <div class="kpis"><button data-nav="roster"><span>등록 선수</span><b>${ids.length}<small>명</small></b></button><button data-nav="history"><span>${S.season} 경기</span><b>${played}<small>경기</small></b></button><button data-nav="season"><span>평균 P</span><b>${avg}<small>P</small></b></button></div></div>`;
   const next=sm.find(m=>m.date>=TODAY);const last=sm.filter(m=>m.date<TODAY).slice(-1)[0];const show=next||last;
   if(show){const d=pd(show.date),ms=meetMatches(show.id),fin=ms.filter(done).length,isT=show.date===TODAY;
     h+=`<button class="mcard nextm" data-meet="${show.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
       <div class="mid"><span class="eyebrow" style="font-size:10px;letter-spacing:.2em">${isT?'Today':next?'Next Matchday':'Last Matchday'}</span><div class="mtitle">${esc(show.title||show.place||'매치데이')}</div><div class="mmeta">참가 ${attOf(show).length}명 · 경기 ${fin}/${ms.length}</div></div>${isT?'<span class="st today">TODAY</span>':next?`<span class="st up">D-${Math.round((pd(show.date)-pd(TODAY))/864e5)}</span>`:'<span class="st fin">FINAL</span>'}</button>`;
   }
-  h+=`<div class="tiles">
-    <button class="tile" data-nav="feed"><span class="eyebrow">Matchday</span><b>매치데이</b><span class="ti">${IC.n_feed}</span><small>${sm.length}/${TARGET}회</small></button>
+  h+=`<div class="tiles t3">
     <button class="tile" data-nav="season"><span class="eyebrow">Ranking</span><b>클럽 순위</b><span class="ti">${IC.n_rank}</span><small>P 순위표</small></button>
     <button class="tile" data-nav="roster"><span class="eyebrow">Players</span><b>선수 관리</b><span class="ti">${IC.n_roster}</span><small>${ids.length}명</small></button>
     <button class="tile" data-nav="history"><span class="eyebrow">History</span><b>경기 기록</b><span class="ti">${IC.n_hist}</span><small>${played}경기</small></button></div>`;
@@ -1050,13 +1065,18 @@ function viewHistory(){
   if(S.loading)return loadingView();
   const t=S.histType;
   const ms=seasonMatches().filter(done).filter(x=>t==='all'||x.type===t);
-  let h=`<div class="between"><h2 class="h1">Match History</h2><span class="lbl">${S.season} · ${ms.length}경기</span></div>
+  let h=`<div class="between"><h2 class="h1" style="white-space:nowrap">History</h2><span class="lbl">${S.season} · ${ms.length}경기</span></div>
     <div class="seg">${[['all','전체'],['D','복식'],['S','단식']].map(([k,l])=>`<button data-hist="${k}" aria-pressed="${t===k}">${l}</button>`).join('')}</div>`;
-  if(!ms.length)return h+`<div class="empty"><p class="big" style="font-size:19px">기록된 경기가 없어요</p><p class="hint">매치데이에서 점수를 입력하면 여기에 쌓여요.</p></div>`;
-  const meets=seasonMeets().slice().reverse().filter(m=>ms.some(x=>x.meetId===m.id));
+  const sm=seasonMeets(),pastN=sm.filter(m=>m.date<TODAY).length;
+  const open=sm.filter(m=>!meetMatches(m.id).some(done)).sort((a,b)=>a.date.localeCompare(b.date));
+  h=h.replace('<span class="lbl">'+S.season+' · '+ms.length+'경기</span>',`<span class="lbl" style="white-space:nowrap">매치데이 ${pastN}/${TARGET} · ${ms.length}경기</span>`);
+  if(open.length){h+=`<div class="hgroup"><div class="round-h"><b style="font-size:14px">예정 · 기록 전</b></div><div class="feed">${open.map(m=>{const d=pd(m.date),n=meetMatches(m.id).length;
+    return `<button class="mcard" data-meet="${m.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div><div class="mid"><div class="mtitle">${esc(m.title||m.place||'매치데이')}</div><div class="mmeta">참가 ${attOf(m).length}명 · ${n?`대진 ${n}경기`:'대진 전'}</div></div>${m.date===TODAY?'<span class="st today">TODAY</span>':m.date>TODAY?'<span class="st up">UPCOMING</span>':'<span class="st none">NO RECORD</span>'}</button>`}).join('')}</div></div>`}
+  if(!ms.length)return h+(open.length?'':`<div class="empty"><p class="big" style="font-size:19px">기록된 경기가 없어요</p><p class="hint">+ 버튼으로 새 매치데이를 만들거나 경기를 바로 기록해 보세요.</p></div>`);
+  const meets=sm.slice().reverse().filter(m=>ms.some(x=>x.meetId===m.id));
   meets.forEach(m=>{
     const d=pd(m.date);const list=ms.filter(x=>x.meetId===m.id).sort((a,b)=>(b.round-a.round)||(a.court-b.court));
-    h+=`<div class="hgroup"><button class="hg-h" data-meet="${m.id}"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())} ${DOW[d.getDay()]}</b><span>${esc(m.title||m.place||'매치데이')}</span>${IC.next}</button>
+    h+=`<div class="hgroup"><button class="hg-h" data-meet="${m.id}"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())} ${DOW[d.getDay()]}</b><span>${esc(m.title||m.place||'매치데이')}</span><em>매치데이 열기</em>${IC.next}</button>
       <div class="mclist">${list.map(x=>{const all=meetMatches(m.id);return matchCard({...x,_date:m.date},{no:all.findIndex(y=>y.id===x.id)+1,date:true})}).join('')}</div></div>`;
   });
   return h+`<p class="note">점수를 탭하면 고칠 수 있어요.</p>`;
@@ -1136,19 +1156,31 @@ function fabModal(){
   });
 }
 const CLUB_ICONS=['crown','ball','trophy','sparkF','flame','bolt'];
+const clubPic=(c,cls)=>`<span class="club-ic ${cls||''} ${c.photo?'ph':''}">${c.photo?`<img src="${esc(c.photo)}" alt="">`:(IC[c.icon||'crown']||IC.crown)}</span>`;
+function squareImage(file,size){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{
+  const k=Math.min(im.width,im.height),cv=document.createElement('canvas');cv.width=cv.height=size;const g=cv.getContext('2d');
+  g.drawImage(im,(im.width-k)/2,(im.height-k)/2,k,k,0,0,size,size);res(cv.toDataURL('image/jpeg',.82))};im.src=fr.result};fr.readAsDataURL(file)})}
 function clubModal(isNew){
-  const c=isNew?{name:'',region:'',intro:'',icon:'ball'}:clubInfo(S.clubId);let icon=c.icon||'crown';
-  openModal(isNew?'새 클럽 만들기':'클럽 정보 수정',`<div class="field"><span class="lbl">아이콘</span><div class="icons">${CLUB_ICONS.map(k=>`<button data-ico="${k}" aria-pressed="${icon===k}" aria-label="${k}">${IC[k]}</button>`).join('')}</div></div>
+  const c=isNew?{name:'',region:'',intro:'',icon:'ball'}:clubInfo(S.clubId);let icon=c.icon||'crown',photo=c.photo||'';
+  openModal(isNew?'새 클럽 만들기':'클럽 정보 수정',`<div class="photo-row"><span id="c-prev"></span><div class="photo-btns"><span class="lbl">클럽 사진</span>
+      <div class="row"><label class="btn-ghost sm" for="c-file">${IC.cam}사진 선택</label><input type="file" accept="image/*" id="c-file" hidden><button class="btn-ghost sm" id="c-rm">사진 삭제</button></div>
+      <span class="hint" id="c-ph-hint"></span></div></div>
+    <div class="field" id="c-icons"><span class="lbl">아이콘 (사진이 없을 때)</span><div class="icons">${CLUB_ICONS.map(k=>`<button data-ico="${k}" aria-pressed="${icon===k}" aria-label="${k}">${IC[k]}</button>`).join('')}</div></div>
     <div class="field"><span class="lbl">클럽 이름</span><label class="inp"><input id="c-name" type="text" value="${esc(c.name)}" placeholder="예: 송단모"></label></div>
     <div class="field"><span class="lbl">활동 지역</span><label class="inp"><input id="c-reg" type="text" value="${esc(c.region||'')}" placeholder="예: 부산"></label></div>
     <div class="field"><span class="lbl">소개</span><label class="inp"><input id="c-intro" type="text" value="${esc(c.intro||'')}" placeholder="예: 부산 테니스 단식 랭킹 매치"></label></div>
     <button class="btn-navy" id="c-save">${isNew?'클럽 만들기':'저장'}</button>
     ${!isNew&&S.clubId!=='default'?`<div id="c-delbox"><button class="btn-danger" id="c-del">클럽 삭제</button></div>`:''}`,el=>{
-    el.querySelectorAll('[data-ico]').forEach(b=>b.onclick=()=>{icon=b.dataset.ico;el.querySelectorAll('[data-ico]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.ico===icon))});
+    const drawPic=()=>{el.querySelector('#c-prev').innerHTML=clubPic({photo,icon},'lg');el.querySelector('#c-rm').hidden=!photo;el.querySelector('#c-icons').hidden=!!photo;
+      el.querySelector('#c-ph-hint').textContent=photo?'사진이 아이콘 대신 표시돼요.':'사진이 없으면 아래 아이콘이 표시돼요.'};
+    el.querySelectorAll('[data-ico]').forEach(b=>b.onclick=()=>{icon=b.dataset.ico;el.querySelectorAll('[data-ico]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.ico===icon));drawPic()});
+    el.querySelector('#c-file').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{photo=await squareImage(f,320);drawPic()}catch(err){toast('이 사진은 불러올 수 없어요. 다른 사진을 골라 주세요.')}};
+    el.querySelector('#c-rm').onclick=()=>{photo='';el.querySelector('#c-file').value='';drawPic()};
+    drawPic();
     el.querySelector('#c-save').onclick=()=>{const v=k=>el.querySelector(k).value.trim();const name=v('#c-name');if(!name){toast('클럽 이름을 입력해 주세요.');return}
       closeModal();
-      if(isNew){const id='c'+uid();put('clubs',{id,name,region:v('#c-reg'),intro:v('#c-intro'),icon,createdAt:Date.now()});selectClub(id);toast(`${name} 클럽을 만들었어요. + 버튼으로 선수를 추가해 보세요.`)}
-      else{putCfg({...cfg(),name,region:v('#c-reg'),intro:v('#c-intro'),icon});toast('클럽 정보를 저장했어요.')}};
+      if(isNew){const id='c'+uid();put('clubs',{id,name,region:v('#c-reg'),intro:v('#c-intro'),icon,...(photo?{photo}:{}),createdAt:Date.now()});selectClub(id);toast(`${name} 클럽을 만들었어요. + 버튼으로 선수를 추가해 보세요.`)}
+      else{const nc={...cfg(),name,region:v('#c-reg'),intro:v('#c-intro'),icon};if(photo)nc.photo=photo;else delete nc.photo;putCfg(nc);toast('클럽 정보를 저장했어요.')}};
     const d=el.querySelector('#c-del');
     if(d)d.onclick=()=>{el.querySelector('#c-delbox').innerHTML=`<p class="hint" style="margin-bottom:10px">${esc(c.name)} 클럽과 선수 ${S.members.length}명, 매치데이 ${S.meets.length}개, 경기 ${S.matches.length}개 기록을 모두 지울까요? 되돌릴 수 없어요.</p><div class="row"><button class="btn-ghost" data-act="close" style="flex:1">취소</button><button class="btn-danger" id="c-del2" style="flex:1;height:48px">모두 삭제</button></div>`;
       el.querySelector('#c-del2').onclick=()=>{const id=S.clubId;closeModal();[...S.matches].forEach(x=>del('matches',x.id));[...S.meets].forEach(x=>del('meets',x.id));[...S.members].forEach(x=>del('members',x.id));del('clubs',id);selectClub('default');S.view='clubs';render();toast('클럽을 삭제했어요.')}};
@@ -1292,7 +1324,7 @@ function bConfirm(){
 document.addEventListener('click',e=>{
   const t=e.target.closest('button,[data-act]');if(!t)return;
   const d=t.dataset;const m=curMeet();
-  if(d.pick!==undefined||d.ico!==undefined||d.fab!==undefined||d.k!==undefined||d.n!==undefined||d.asel!==undefined)return;
+  if(t.id==='c-rm'||d.pick!==undefined||d.ico!==undefined||d.fab!==undefined||d.k!==undefined||d.n!==undefined||d.asel!==undefined)return;
   const NEED=['club-edit','new','edit-meet','edit-att','build','add-member','clear-empty','del-meet','m-all','m-clr','pin-clear'];
   if((NEED.includes(d.act)||d.delmatch||(d.act==='pin-set'&&cfg().pin))&&!isAdmin()){adminLogin(()=>{const again=document.querySelector(d.act?`[data-act="${d.act}"]`:`[data-delmatch="${d.delmatch}"]`);again&&again.click()});return}
   if(d.scoreb){scoreModal(d.scoreb);return}
