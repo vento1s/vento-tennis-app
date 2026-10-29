@@ -402,6 +402,13 @@ details.edit[open] summary::after{content:" ⌄"}
 .fabf:active{transform:scale(.93)}
 @media (min-width:700px) and (min-height:620px){.fabf{right:16px}}
 main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
+.upbar{display:flex;align-items:center;gap:6px;color:var(--ink-2);font-weight:800;font-size:14px;padding:2px 2px;align-self:flex-start}
+.upbar svg{width:18px;height:18px}
+.upbar em{font-style:normal;font-size:11px;font-weight:700;color:var(--muted);background:var(--card);padding:2px 8px;border-radius:999px}
+.cc-go{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.cc-go svg{width:18px;height:18px}
+.cc-go i{font-style:normal;font-size:10.5px;font-weight:800;color:var(--blue);background:rgba(10,143,216,.15);padding:2px 7px;border-radius:999px}
+.ccard.on{border-color:rgba(10,143,216,.45)}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -527,7 +534,7 @@ const now=new Date();
 const TODAY=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
 const TARGET=6;
 const BASE_VENUES=['스포원','송정테니스파크'];
-const S={members:[],meets:[],matches:[],config:[],clubs:[],clubId:(()=>{try{return localStorage.getItem('ssm-club')||'default'}catch(e){return 'default'}})(),histType:'all',view:'home',qm:null,meetId:null,meetTab:'matches',season:now.getFullYear(),loading:true,local:false,rankType:'all',
+const S={members:[],meets:[],matches:[],config:[],clubs:[],clubId:(()=>{try{return localStorage.getItem('ssm-club')||'default'}catch(e){return 'default'}})(),histType:'all',view:'clubs',qm:null,meetId:null,meetTab:'matches',season:now.getFullYear(),loading:true,local:false,rankType:'all',
   gen:{type:'D',courts:2,rounds:3},build:null,draft:null,editId:null,man:{type:'D',court:1,a:[null,null],b:[null,null]}};
 let DB=null,pending=false,drag=null;
 const LS='ssm-tennis-v1';
@@ -834,7 +841,7 @@ function renderHead(){
   const logo=`<div class="logo"><div class="logo-r"><span class="ssm">SSM</span><span class="ttl">${esc(cname)}</span></div><div class="sub">CHAMPIONSHIP MANAGER <span class="ver">v1.1</span>${S.view!=='clubs'&&cfg().pin&&isAdmin()?'<span class="admtag">ADMIN</span>':''}</div></div>`;
   let h='';
   if(S.view==='clubs')h=logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
-  else if(TOP.includes(S.view))h=logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
+  else if(TOP.includes(S.view))h=`<button class="back" data-nav="clubs" aria-label="내 클럽 목록으로">${IC.back}</button>`+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
   else if(S.view==='meet'){const m=curMeet();h=(S.build?`<button class="back" data-act="b-back" aria-label="이전 단계">${IC.back}</button>`:`<button class="back" data-go="feed" aria-label="뒤로">${IC.back}</button>`)+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`}
   else h=`<button class="back" data-go="${S.view==='new'&&S.editId?'meet':S.view==='quick'?(S.qmFrom||'home'):'feed'}" aria-label="뒤로">${IC.back}</button>`+logo;
   $('#head').innerHTML=h;
@@ -1020,13 +1027,13 @@ function seedList(m){
 function viewClubs(){
   if(S.loading)return loadingView();
   const list=allClubs();
-  let h=`<div class="bhead"><span class="eyebrow">My Clubs</span><p class="big">내 클럽</p></div><div class="clist">`;
+  let h=`<span class="lbl" style="padding:2px 4px 0">가입한 클럽 ${list.length}</span><div class="clist">`;
   list.forEach(c=>{
     const n=RAW.members.filter(x=>clubOf(x)===c.id).length,ms=RAW.matches.filter(x=>clubOf(x)===c.id&&done(x)).length,ad=adminOf(c.id),cur=c.id===S.clubId;
     h+=`<button class="ccard ${cur?'on':''}" data-club="${c.id}">${clubPic(c,'sm')}
       <span class="cc-t"><b>${esc(c.name)}${c.region?` <i class="club-r">${esc(c.region)}</i>`:''}</b>${c.intro?`<small>${esc(c.intro)}</small>`:''}<small class="cc-st">선수 ${n}명 · 경기 ${ms}개</small>
       ${ad.hasPin?`<span class="cc-role ${ad.admin?'adm':''}">${ad.admin?'관리자':'회원'}</span>`:''}</span>
-      <span class="cc-btn">${cur?'선택됨':'선택'}</span></button>`;
+      <span class="cc-go">${cur?'<i>최근</i>':''}${IC.next}</span></button>`;
   });
   return h+`</div><button class="btn-ghost" data-act="club-new" style="width:100%;border-style:dashed">${IC.plus}새 클럽 만들기</button><p class="note">클럽을 누르면 그 클럽 화면으로 들어가요.</p>`;
 }
@@ -1035,7 +1042,7 @@ function viewHome(){
   if(S.loading)return loadingView();
   const c=clubInfo(S.clubId);const sm=seasonMeets();const played=seasonMatches().filter(done).length;
   const ids=S.members.map(m=>m.id);const avg=ids.length?Math.round(ids.reduce((t,id)=>t+pOf(id),0)/ids.length):P0;
-  let h=`<div class="club"><div class="club-top"><button class="csw" data-go="clubs" aria-label="내 클럽 목록 (클럽 바꾸기)">${clubPic(c)}<span class="csw-b">${IC.swap}</span></button><div class="club-t">${c.region?`<span class="club-r">${esc(c.region)}</span>`:''}<b>${esc(c.name)}</b>${c.intro?`<span>${esc(c.intro)}</span>`:''}</div><button class="mini" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button></div>
+  let h=`<button class="upbar" data-nav="clubs">${IC.back}<span>내 클럽</span><em>${allClubs().length}개</em></button><div class="club"><div class="club-top">${clubPic(c)}<div class="club-t">${c.region?`<span class="club-r">${esc(c.region)}</span>`:''}<b>${esc(c.name)}</b>${c.intro?`<span>${esc(c.intro)}</span>`:''}</div><button class="mini" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button></div>
     <div class="kpis"><button data-nav="roster"><span>등록 선수</span><b>${ids.length}<small>명</small></b></button><button data-nav="history"><span>${S.season} 경기</span><b>${played}<small>경기</small></b></button><button data-nav="season"><span>평균 P</span><b>${avg}<small>P</small></b></button></div></div>`;
   const next=sm.find(m=>m.date>=TODAY);const last=sm.filter(m=>m.date<TODAY).slice(-1)[0];const show=next||last;
   if(show){const d=pd(show.date),ms=meetMatches(show.id),fin=ms.filter(done).length,isT=show.date===TODAY;
@@ -1149,7 +1156,7 @@ function render(){
   }
   let nav='';
   if(!bar){
-    const items=(TOP.includes(S.view)||(S.view==='meet'&&!b))?[['clubs','HOME',IC.n_home,S.view==='clubs'],['home','CLUB',IC.n_club,S.view==='home'||S.view==='feed'||S.view==='meet'],['season','RANKING',IC.n_rank,S.view==='season'||S.view==='roster'],['history','HISTORY',IC.n_hist,S.view==='history']]:[];
+    const items=((TOP.includes(S.view)&&S.view!=='clubs')||(S.view==='meet'&&!b))?[['home','CLUB',IC.n_club,S.view==='home'||S.view==='feed'||S.view==='meet'],['season','RANKING',IC.n_rank,S.view==='season'||S.view==='roster'],['history','HISTORY',IC.n_hist,S.view==='history']]:[];
     if(items.length)nav=`<nav class="bnav" aria-label="메뉴"><div class="bnav-in" style="grid-template-columns:repeat(${items.length},1fr)">${items.map(([v,l,ic,on])=>`<button data-nav="${v}" ${on?'aria-current="page"':''}>${ic}<span>${l}</span></button>`).join('')}</div></nav>
       <button class="fabf" data-act="fab" aria-label="${S.view==='clubs'?'새 클럽 만들기':'추가하기'}">${IC.plus}</button>`;
   }
