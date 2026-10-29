@@ -389,6 +389,23 @@ details.edit[open] summary::after{content:" ⌄"}
 .ii-in{background:var(--card);border:1px solid var(--line);border-radius:9px;height:34px;padding:0 9px;min-width:0;font-weight:800;color:var(--ink)}
 .ii-row.dup{opacity:.7}
 .ii-dup{grid-column:2/-1;font-size:11px;color:var(--gold);font-weight:700}
+.top-in{padding-block:11px 10px!important;gap:11px!important}
+.csw{position:relative;flex:none;border-radius:13px}
+.club-ic.hd{width:42px;height:42px;border-radius:12px;background:rgba(10,143,216,.2);color:var(--gold)}
+.club-ic.hd svg{width:24px;height:24px}
+.csw-b{position:absolute;right:-5px;bottom:-5px;width:19px;height:19px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;box-shadow:0 0 0 2.5px var(--navy)}
+.csw-b svg{width:11px;height:11px}
+.csw:active .club-ic{transform:scale(.94)}
+.hreg{background:rgba(255,255,255,.12);color:var(--ink);letter-spacing:.02em;font-style:normal;font-family:var(--f-body);font-weight:700;font-size:10px;padding:1px 7px;border-radius:999px;margin-right:2px}
+.hedit{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none;color:var(--ink-2);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
+.hedit svg{width:16px;height:16px}
+.crown.sm{width:34px;height:34px}
+.crown.sm svg{width:26px;height:26px}
+.club.only{padding:12px 14px;gap:8px}
+.club.only .kpis{border-top:0;padding-top:0}
+.cintro{margin:0;font-size:12px;color:var(--ink-2);opacity:.7}
+.sub.tight{letter-spacing:.1em;min-width:0}
+.sub-t{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -553,6 +570,7 @@ const IC={
   flame:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5c.6 3.2 4 5.2 4.8 8.6.9 3.8-1.6 8.4-4.8 8.4s-5.6-2.6-5.2-6c.3-2.4 1.9-3.6 2.4-5.3.5 1.5.4 2.8 1.6 3.6.7-3.2.3-6.1 1.2-9.3z"/></svg>',
   bolt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2L5 13.5h6L9.8 22 19 10h-6z"/></svg>',
   cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"><path d="M4 8h3l1.6-2.5h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.4"/></svg>',
+  swap:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg>',
   trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.6 4M17 6h2.5a2.5 2.5 0 0 1-2.6 4M12 14v3M8 21l1.5-4h5L16 21"/></svg>'
 };
 
@@ -819,7 +837,10 @@ function renderHead(){
   const logo=`<div class="logo"><div class="logo-r"><span class="ssm">SSM</span><span class="ttl">${esc(cname)}</span></div><div class="sub">CHAMPIONSHIP MANAGER <span class="ver">v1.1</span>${S.view!=='clubs'&&cfg().pin&&isAdmin()?'<span class="admtag">ADMIN</span>':''}</div></div>`;
   let h='';
   if(S.view==='clubs')h=logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
-  else if(TOP.includes(S.view))h=`<button class="back" data-go="clubs" aria-label="내 클럽으로">${IC.grid}</button>`+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
+  else if(TOP.includes(S.view)){const c=clubInfo(S.clubId);
+    h=`<button class="csw" data-go="clubs" aria-label="내 클럽 목록 (클럽 바꾸기)">${clubPic(c,'hd')}<span class="csw-b">${IC.swap}</span></button>
+      <div class="logo"><div class="logo-r"><span class="ssm">SSM</span><span class="ttl">${esc(c.name)}</span></div><div class="sub tight">${c.region?`<span class="hreg">${esc(c.region)}</span>`:''}<span class="sub-t">CHAMPIONSHIP MANAGER</span>${cfg().pin&&isAdmin()?'<span class="admtag">ADMIN</span>':''}</div></div>`+
+      (S.view==='home'?`<button class="hedit" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button>`:`<span class="crown sm" aria-hidden="true">${IC.crown}</span>`)}
   else if(S.view==='meet'){const m=curMeet();h=(S.build?`<button class="back" data-act="b-back" aria-label="이전 단계">${IC.back}</button>`:`<button class="back" data-go="feed" aria-label="뒤로">${IC.back}</button>`)+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`}
   else h=`<button class="back" data-go="${S.view==='new'&&S.editId?'meet':S.view==='quick'?(S.qmFrom||'home'):'feed'}" aria-label="뒤로">${IC.back}</button>`+logo;
   $('#head').innerHTML=h;
@@ -1019,7 +1040,7 @@ function viewHome(){
   if(S.loading)return loadingView();
   const c=clubInfo(S.clubId);const sm=seasonMeets();const played=seasonMatches().filter(done).length;
   const ids=S.members.map(m=>m.id);const avg=ids.length?Math.round(ids.reduce((t,id)=>t+pOf(id),0)/ids.length):P0;
-  let h=`<div class="club"><div class="club-top">${clubPic(c)}<div class="club-t">${c.region?`<span class="club-r">${esc(c.region)}</span>`:''}<b>${esc(c.name)}</b>${c.intro?`<span>${esc(c.intro)}</span>`:''}</div><button class="mini" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button></div>
+  let h=`<div class="club only">${c.intro?`<p class="cintro">${esc(c.intro)}</p>`:''}
     <div class="kpis"><button data-nav="roster"><span>등록 선수</span><b>${ids.length}<small>명</small></b></button><button data-nav="history"><span>${S.season} 경기</span><b>${played}<small>경기</small></b></button><button data-nav="season"><span>평균 P</span><b>${avg}<small>P</small></b></button></div></div>`;
   const next=sm.find(m=>m.date>=TODAY);const last=sm.filter(m=>m.date<TODAY).slice(-1)[0];const show=next||last;
   if(show){const d=pd(show.date),ms=meetMatches(show.id),fin=ms.filter(done).length,isT=show.date===TODAY;
