@@ -409,6 +409,7 @@ main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
 .cc-go svg{width:18px;height:18px}
 .cc-go i{font-style:normal;font-size:10.5px;font-weight:800;color:var(--blue);background:rgba(10,143,216,.15);padding:2px 7px;border-radius:999px}
 .ccard.on{border-color:rgba(10,143,216,.45)}
+.admbox{display:grid;gap:6px;border-top:1px solid var(--line);padding-top:12px}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -1081,9 +1082,7 @@ function viewSeason(){
   const played=seasonMatches().filter(done).length;
   let h=`<div class="hof"><div class="hof-h">${IC.trophy}<span class="eyebrow">Hall of Fame</span><h2>SEASON ${S.season}<br>STANDINGS</h2></div>
     <div class="hof-b"><div class="seg">${[['all','전체'],['D','복식'],['S','단식']].map(([k,l])=>`<button data-rank="${k}" aria-pressed="${S.rankType===k}">${l}</button>`).join('')}</div>
-    ${rows.length?rankRows(rows):''}</div></div>
-    <button class="btn-blue" data-act="copy-season" style="justify-content:center;height:52px">${IC.copy}카톡 순위표 복사</button>
-    <p class="note">${S.rankType==='all'?`P(포인트)는 모두 ${P0}에서 시작해요. 이기면 오르고 지면 내려가며, 나보다 강한 상대를 이길수록 많이 올라요.`:'복식·단식 보기는 승수 → 승률 → 게임 득실 순이에요.'} 시즌 경기 ${played}개 집계.</p>`;
+    ${rows.length?rankRows(rows):''}</div></div>`;
   return h;
 }
 function viewRoster(){
@@ -1139,7 +1138,7 @@ function render(){
   let html;
   if(S.view==='new')html=viewNew();
   else if(S.view==='meet')html=viewMeet(curMeet());
-  else if(S.view==='season'||S.view==='roster')html=viewSeason()+(S.loading?'':viewRoster());
+  else if(S.view==='season'||S.view==='roster')html=viewSeason();
   else if(S.view==='history')html=viewHistory();
   else if(S.view==='quick')html=viewQuick();
   else if(S.view==='feed')html=viewFeed();
@@ -1208,6 +1207,8 @@ function clubModal(isNew){
     <div class="field"><span class="lbl">활동 지역</span><label class="inp"><input id="c-reg" type="text" value="${esc(c.region||'')}" placeholder="예: 부산"></label></div>
     <div class="field"><span class="lbl">소개</span><label class="inp"><input id="c-intro" type="text" value="${esc(c.intro||'')}" placeholder="예: 부산 테니스 단식 랭킹 매치"></label></div>
     <button class="btn-navy" id="c-save">${isNew?'클럽 만들기':'저장'}</button>
+    ${isNew?'':(()=>{const cc=cfg(),ad=isAdmin();return `<div class="admbox"><span class="lbl">관리자 비밀번호</span><span class="hint">${!cc.pin?'정하면 매치데이 생성·삭제, 참가자와 선수 수정은 관리자만 할 수 있어요. 점수 입력은 누구나 가능해요.':ad?'이 기기에서 관리자 모드를 쓰고 있어요.':'회원 모드예요.'}</span>
+      <div class="row">${!cc.pin?`<button class="btn-ghost sm" data-act="pin-set">비밀번호 설정</button>`:ad?`<button class="btn-ghost sm" data-act="pin-set">변경</button><button class="btn-ghost sm" data-act="logout">회원 모드로</button><button class="btn-ghost sm" data-act="pin-clear">해제</button>`:`<button class="btn-ghost sm" data-act="login">관리자 로그인</button>`}</div></div>`})()}
     ${!isNew&&S.clubId!=='default'?`<div id="c-delbox"><button class="btn-danger" id="c-del">클럽 삭제</button></div>`:''}`,el=>{
     const drawPic=()=>{el.querySelector('#c-prev').innerHTML=clubPic({photo,icon},'lg');el.querySelector('#c-rm').hidden=!photo;el.querySelector('#c-icons').hidden=!!photo;
       el.querySelector('#c-ph-hint').textContent=photo?'사진이 아이콘 대신 표시돼요.':'사진이 없으면 아래 아이콘이 표시돼요.'};
@@ -1461,7 +1462,7 @@ document.addEventListener('click',e=>{
     case 'copy-season':copyText(seasonText(),'순위표');break;
     case 'copy-meet':if(m)copyText(meetText(m),'경기 결과');break;
     case 'login':closeModal();adminLogin();break;
-    case 'logout':setKey('');render();toast('회원 모드로 전환했어요.');break;
+    case 'logout':closeModal();setKey('');render();toast('회원 모드로 전환했어요.');break;
     case 'pin-set':setPinFlow();break;
     case 'pin-clear':clearPin();break;
     case 'reload':location.reload();break;
