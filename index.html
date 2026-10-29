@@ -397,6 +397,11 @@ details.edit[open] summary::after{content:" ⌄"}
 .club-brand .ssm{font-size:9.5px;padding:1px 5px;border-radius:4px}
 .back.hsw{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);margin-left:0}
 .back.hsw svg{width:16px;height:16px}
+.fabf{position:fixed;z-index:7;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(78px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;background:var(--gold);color:var(--navy);display:grid;place-items:center;box-shadow:0 10px 26px rgba(0,0,0,.45),0 4px 14px rgba(255,212,0,.25)}
+.fabf svg{width:28px;height:28px}
+.fabf:active{transform:scale(.93)}
+@media (min-width:700px) and (min-height:620px){.fabf{right:16px}}
+main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -562,6 +567,7 @@ const IC={
   bolt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2L5 13.5h6L9.8 22 19 10h-6z"/></svg>',
   cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"><path d="M4 8h3l1.6-2.5h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.4"/></svg>',
   swap:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg>',
+  n_club:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"><path d="M3.5 8.5l4.2 3.3L12 5.5l4.3 6.3 4.2-3.3-1.7 9H5.2z"/><path d="M5.5 20.5h13"/></svg>',
   trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.6 4M17 6h2.5a2.5 2.5 0 0 1-2.6 4M12 14v3M8 21l1.5-4h5L16 21"/></svg>'
 };
 
@@ -828,7 +834,7 @@ function renderHead(){
   const logo=`<div class="logo"><div class="logo-r"><span class="ssm">SSM</span><span class="ttl">${esc(cname)}</span></div><div class="sub">CHAMPIONSHIP MANAGER <span class="ver">v1.1</span>${S.view!=='clubs'&&cfg().pin&&isAdmin()?'<span class="admtag">ADMIN</span>':''}</div></div>`;
   let h='';
   if(S.view==='clubs')h=logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
-  else if(TOP.includes(S.view))h=`<button class="back hsw" data-go="clubs" aria-label="내 클럽 목록 (클럽 바꾸기)">${IC.swap}</button>`+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
+  else if(TOP.includes(S.view))h=logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
   else if(S.view==='meet'){const m=curMeet();h=(S.build?`<button class="back" data-act="b-back" aria-label="이전 단계">${IC.back}</button>`:`<button class="back" data-go="feed" aria-label="뒤로">${IC.back}</button>`)+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`}
   else h=`<button class="back" data-go="${S.view==='new'&&S.editId?'meet':S.view==='quick'?(S.qmFrom||'home'):'feed'}" aria-label="뒤로">${IC.back}</button>`+logo;
   $('#head').innerHTML=h;
@@ -1014,7 +1020,7 @@ function seedList(m){
 function viewClubs(){
   if(S.loading)return loadingView();
   const list=allClubs();
-  let h=`<div class="bhead"><span class="eyebrow">My Clubs</span><p class="big">내 클럽</p><p class="hint">들어갈 클럽을 고르세요. 클럽마다 선수, 매치데이, 순위, 관리자 비밀번호가 따로예요.</p></div><div class="clist">`;
+  let h=`<div class="bhead"><span class="eyebrow">My Clubs</span><p class="big">내 클럽</p></div><div class="clist">`;
   list.forEach(c=>{
     const n=RAW.members.filter(x=>clubOf(x)===c.id).length,ms=RAW.matches.filter(x=>clubOf(x)===c.id&&done(x)).length,ad=adminOf(c.id),cur=c.id===S.clubId;
     h+=`<button class="ccard ${cur?'on':''}" data-club="${c.id}">${clubPic(c,'sm')}
@@ -1022,7 +1028,7 @@ function viewClubs(){
       ${ad.hasPin?`<span class="cc-role ${ad.admin?'adm':''}">${ad.admin?'관리자':'회원'}</span>`:''}</span>
       <span class="cc-btn">${cur?'선택됨':'선택'}</span></button>`;
   });
-  return h+`</div><p class="note">새 클럽을 만들면 비어 있는 상태로 시작해요. 클럽 홈의 + 버튼으로 선수와 경기를 추가하세요.</p>`;
+  return h+`</div><button class="btn-ghost" data-act="club-new" style="width:100%;border-style:dashed">${IC.plus}새 클럽 만들기</button><p class="note">클럽을 누르면 그 클럽 화면으로 들어가요.</p>`;
 }
 function lastDelta(id){const h=ELO.hist[id]||[];return h.length>1?h[h.length-1].p-h[h.length-2].p:0}
 function viewHome(){
@@ -1045,7 +1051,7 @@ function viewHome(){
   h+=rows.length?`<div class="hlist">${rows.slice(0,5).map((r,i)=>{const ld=lastDelta(r.id);return `<button class="lr" data-member="${r.id}"><span class="lr-n ${i<3?'r'+(i+1):''}">${i===0?IC.crown:i+1}</span>
       <span class="lr-t"><b>${esc(dn(r.id))}</b><small>${r.p}전 ${recK(r)} · 승률 ${pct(r)}</small></span><span class="lr-p"><b class="tab-n">${pOf(r.id)}P</b><small class="${ld>0?'pos':ld<0?'neg':''}">${ld>0?'▲ +'+ld:ld<0?'▼ '+ld:'–'}</small></span></button>`}).join('')}</div>
       ${rows.length>5?`<button class="link-back" data-nav="season" style="justify-self:center">전체 순위 보기 (${rows.length}명)</button>`:''}`
-    :`<div class="empty"><p class="hint">점수가 입력되면 랭킹이 나와요. 가운데 + 버튼으로 경기를 바로 기록할 수 있어요.</p></div>`;
+    :`<div class="empty"><p class="hint">점수가 입력되면 랭킹이 나와요. 오른쪽 아래 + 버튼으로 경기를 바로 기록할 수 있어요.</p></div>`;
   return h;
 }
 function qmReady(){const q=S.qm;if(!q)return false;const n=q.type==='D'?2:1;return q.a.slice(0,n).every(Boolean)&&q.b.slice(0,n).every(Boolean)&&q.sa!=null&&q.sb!=null}
@@ -1076,8 +1082,8 @@ function viewSeason(){
 function viewRoster(){
   if(S.loading)return loadingView();
   const st=Object.fromEntries(seasonStats('all').map(r=>[r.id,r]));
-  let h=`<div class="between"><h2 class="h1">Roster · ${S.members.length}</h2><button class="btn-blue" data-act="add-member">${IC.plus}ADD</button></div>`;
-  h+=`<div class="card"><div class="between"><span class="h1" style="font-size:18px">Members (${S.members.length})</span></div>
+  let h=`<div class="between" id="roster-sec" style="padding-top:8px"><h2 class="h1">Players · ${S.members.length}</h2><button class="btn-blue" data-act="add-member">${IC.plus}ADD</button></div>`;
+  h+=`<div class="card">
     ${S.members.length?`<div class="players">${members().map(m=>`<button class="pl" data-member="${m.id}">${esc(dn(m.id))}</button>`).join('')}</div>`:`<p class="muted" style="margin:0">멤버를 추가해 주세요.</p>`}
     <p class="hint">멤버를 누르면 P 그래프와 시즌 기록, 최고의 파트너를 볼 수 있어요.</p></div>`;
   const c=cfg(),adm=isAdmin();
@@ -1114,7 +1120,7 @@ function toTop(){const e=scEl();if(e)e.scrollTo(0,0);else window.scrollTo(0,0)}
 const scY=()=>{const e=scEl();return e?e.scrollTop:window.scrollY};
 const scBy=dy=>{const e=scEl();if(e)e.scrollBy(0,dy);else window.scrollBy(0,dy)};
 const vpBox=()=>{const e=scEl();if(!e)return {top:0,h:window.innerHeight};const r=e.getBoundingClientRect();return {top:r.top,h:r.height}};
-const TOP=['home','feed','season','history','roster'];
+const TOP=['clubs','home','feed','season','history','roster'];
 function render(){
   ELO=computeElo();
   if(drag){pending=true;return}
@@ -1126,8 +1132,7 @@ function render(){
   let html;
   if(S.view==='new')html=viewNew();
   else if(S.view==='meet')html=viewMeet(curMeet());
-  else if(S.view==='season')html=viewSeason();
-  else if(S.view==='roster')html=viewRoster();
+  else if(S.view==='season'||S.view==='roster')html=viewSeason()+(S.loading?'':viewRoster());
   else if(S.view==='history')html=viewHistory();
   else if(S.view==='quick')html=viewQuick();
   else if(S.view==='feed')html=viewFeed();
@@ -1137,7 +1142,6 @@ function render(){
   $('#view').innerHTML=html;
   let bar='';const b=S.build;
   if(S.view==='new')bar=`<button class="go" data-act="go">${S.editId?'SAVE':'GO'} ${IC.next}</button>`;
-  else if(S.view==='clubs')bar=`<button class="go" data-act="club-new">${IC.plus} 새 클럽 만들기</button>`;
   else if(S.view==='quick'){const ok=qmReady();bar=`<button class="go blue" data-act="qm-save" ${ok?'':'disabled'}>${ok?'경기 저장':'선수와 점수를 골라 주세요'} ${IC.next}</button>`}
   else if(S.view==='meet'&&b){
     if(b.step==='random'||b.step==='seed')bar=b.preview?`<button class="go blue" data-act="b-confirm">이 대진으로 확정 ${IC.next}</button>`:`<button class="go" data-act="b-preview">대진 미리보기 ${IC.next}</button>`;
@@ -1145,8 +1149,9 @@ function render(){
   }
   let nav='';
   if(!bar){
-    const items=(TOP.includes(S.view)||(S.view==='meet'&&!b))?[['nav','home','HOME',IC.n_home,S.view==='home'||S.view==='feed'||S.view==='meet'],['nav','season','RANKING',IC.n_rank,S.view==='season'],['fab'],['nav','roster','PLAYERS',IC.n_roster,S.view==='roster'],['nav','history','HISTORY',IC.n_hist,S.view==='history']]:[];
-    if(items.length)nav=`<nav class="bnav" aria-label="메뉴"><div class="bnav-in" style="grid-template-columns:repeat(${items.length},1fr)">${items.map(([k,v,l,ic,on])=>k==='fab'?`<button class="fab" data-act="fab" aria-label="추가하기">${IC.plus}</button>`:`<button data-${k}="${v}" ${on?'aria-current="page"':''}>${ic}<span>${l}</span></button>`).join('')}</div></nav>`;
+    const items=(TOP.includes(S.view)||(S.view==='meet'&&!b))?[['clubs','HOME',IC.n_home,S.view==='clubs'],['home','CLUB',IC.n_club,S.view==='home'||S.view==='feed'||S.view==='meet'],['season','RANKING',IC.n_rank,S.view==='season'||S.view==='roster'],['history','HISTORY',IC.n_hist,S.view==='history']]:[];
+    if(items.length)nav=`<nav class="bnav" aria-label="메뉴"><div class="bnav-in" style="grid-template-columns:repeat(${items.length},1fr)">${items.map(([v,l,ic,on])=>`<button data-nav="${v}" ${on?'aria-current="page"':''}>${ic}<span>${l}</span></button>`).join('')}</div></nav>
+      <button class="fabf" data-act="fab" aria-label="${S.view==='clubs'?'새 클럽 만들기':'추가하기'}">${IC.plus}</button>`;
   }
   $('#bar').innerHTML=bar?`<div class="gobar">${bar}</div>`:nav;
 }
@@ -1424,7 +1429,7 @@ document.addEventListener('click',e=>{
   if(d.go){if(d.go==='meet'&&S.editId){S.view='meet';S.editId=null;S.draft=null}else{S.view=d.go;S.editId=null;S.draft=null;if(d.go==='feed'){S.meetId=null;S.build=null}}render();toTop();return}
   if(d.meet){S.view='meet';S.meetId=d.meet;S.meetTab='matches';S.build=null;S.man={type:'D',court:1,a:[null,null],b:[null,null]};render();toTop();return}
   if(d.member){memberModal(d.member);return}
-  if(d.nav){S.view=d.nav;S.meetId=null;S.build=null;S.editId=null;S.draft=null;render();toTop();return}
+  if(d.nav){S.view=d.nav;S.meetId=null;S.build=null;S.editId=null;S.draft=null;render();if(d.nav==='roster'){const r=document.getElementById('roster-sec');r?r.scrollIntoView({block:'start'}):toTop()}else toTop();return}
   if(d.mtab){S.meetTab=d.mtab;render();toTop();return}
   if(d.rank){S.rankType=d.rank;render();return}
   if(d.gtype){S.gen.type=d.gtype;render();return}
@@ -1442,7 +1447,7 @@ document.addEventListener('click',e=>{
   if(d.delmatch){confirmModal('경기 삭제','이 경기와 입력한 점수를 지울까요?','삭제',()=>del('matches',d.delmatch));return}
   switch(d.act){
     case 'close':closeModal();break;
-    case 'fab':fabModal();break;
+    case 'fab':if(S.view==='clubs')clubModal(true);else fabModal();break;
     case 'club-edit':clubModal(false);break;
     case 'club-new':clubModal(true);break;
     case 'qm-save':qmSave();break;
