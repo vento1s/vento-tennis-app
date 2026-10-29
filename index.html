@@ -410,6 +410,16 @@ main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
 .cc-go i{font-style:normal;font-size:10.5px;font-weight:800;color:var(--blue);background:rgba(10,143,216,.15);padding:2px 7px;border-radius:999px}
 .ccard.on{border-color:rgba(10,143,216,.45)}
 .admbox{display:grid;gap:6px;border-top:1px solid var(--line);padding-top:12px}
+.mhero .club-top{align-items:flex-start}
+.hedit{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:none;color:var(--ink-2);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
+.hedit svg{width:15px;height:15px}
+.mh-meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--ink-2)}
+.mh-meta i{font-style:normal;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.mh-meta svg{width:13px;height:13px;color:var(--blue)}
+.inp input[type=time]{min-width:0;width:100%}
+.modal .g2 .inp{padding:0 10px;gap:7px}
+.modal .g2 .inp input{font-size:14.5px}
+.inp input[type=time]::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:auto;height:auto;opacity:0;cursor:pointer}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -738,7 +748,7 @@ function seasonText(){
 }
 function meetText(m){
   const ms=meetMatches(m.id),att=attOf(m);
-  const lines=[`🎾 ${m.title||'매치데이'} · ${fmtK(m.date)}${m.place?' · '+m.place:''}`,''];
+  const lines=[`🎾 ${m.title||'매치데이'} · ${fmtK(m.date)}${m.time?' '+m.time:''}${m.place?' · '+m.place:''}`,''];
   [...new Set(ms.map(x=>x.round))].sort((a,b)=>a-b).forEach(r=>{
     lines.push(`[ROUND ${r}]`);
     ms.filter(x=>x.round===r).forEach(x=>{const sc=done(x)?`${x.sa} : ${x.sb}`:'- : -';lines.push(`${x.court}코트  ${x.a.map(dn).join('·')}  ${sc}  ${x.b.map(dn).join('·')}`)});
@@ -883,7 +893,8 @@ function viewNew(){
   const custom=d.customVenue;
   let h=`<div class="card"><div class="between"><span class="h1" style="font-size:18px">Matchday Config</span><span class="step">STEP 1/2</span></div>
     <div class="g2 stack"><div class="field"><span class="lbl">Date</span><label class="inp">${IC.cal}<input id="d-date" type="date" value="${esc(d.date)}" aria-label="날짜"></label></div>
-    <div class="field"><span class="lbl">Event Title</span><label class="inp">${IC.spark}<input id="d-title" type="text" value="${esc(d.title)}" placeholder="알로하!" aria-label="이벤트 제목"></label></div></div>
+    <div class="field"><span class="lbl">Time</span><label class="inp">${IC.n_hist}<input id="d-time" type="time" value="${esc(d.time||'')}" aria-label="시작 시간"></label></div></div>
+    <div class="field"><span class="lbl">Event Title</span><label class="inp">${IC.spark}<input id="d-title" type="text" value="${esc(d.title)}" placeholder="알로하!" aria-label="이벤트 제목"></label></div>
     <div class="field"><span class="lbl">Venue</span><div class="venues">${venues.map(v=>`<button class="venue" data-venue="${esc(v)}" aria-pressed="${!custom&&d.place===v}">${IC.pin}<span>${esc(v)}</span></button>`).join('')}<button class="venue add" data-act="custom-venue" aria-pressed="${!!custom}">${IC.plus}<span>직접 입력</span></button></div>
     ${custom?`<label class="inp">${IC.pin}<input id="d-place" type="text" value="${esc(d.place)}" placeholder="장소 이름" aria-label="장소"></label>`:''}</div>
     <div class="g2 stack"><div class="field"><span class="lbl">Environment</span><div class="seg">${['야외','실내'].map(v=>`<button data-env="${v}" aria-pressed="${d.env===v}">${v}</button>`).join('')}</div></div>
@@ -930,8 +941,9 @@ function meetHero(m){
   const d=pd(m.date),ms=meetMatches(m.id),fin=ms.filter(done).length,mvp=mvpOf(m),isT=m.date===TODAY;
   const tabs=[['matches','경기'],['ranking','순위'],['admin','관리']];
   return `<div class="club mhero"><div class="club-top"><div class="mh-date"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
-      <div class="club-t"><span class="eyebrow" style="font-size:10px;letter-spacing:.22em">${isT?'Today · Matchday':m.date>TODAY?'Upcoming · Matchday':'Matchday'}</span><b>${esc(m.title||m.place||'매치데이')}</b><span>${[m.title?m.place:'',m.env,m.surface].filter(Boolean).map(esc).join(' · ')||esc(fmtK(m.date))}</span></div>
-      ${isT?'<span class="st today">TODAY</span>':''}</div>
+      <div class="club-t"><span class="eyebrow" style="font-size:10px;letter-spacing:.22em">${isT?'Today · Matchday':m.date>TODAY?'Upcoming · Matchday':'Matchday'}</span><b>${esc(m.title||m.place||'매치데이')}</b>
+        <span class="mh-meta">${m.time?`<i>${IC.n_hist}${esc(m.time)}</i>`:''}${m.title&&m.place?`<i>${IC.pin}${esc(m.place)}</i>`:''}${m.surface||m.env?`<i>${[m.env,m.surface].filter(Boolean).map(esc).join(' · ')}</i>`:''}${!m.time&&!m.place&&!m.surface&&!m.env?esc(fmtK(m.date)):''}</span></div>
+      <button class="hedit" data-act="meet-info" aria-label="매치데이 정보 수정">${IC.edit}</button></div>
     <div class="kpis"><button data-act="edit-att"><span>참가</span><b>${attOf(m).length}<small>명</small></b></button><button data-mtab="matches"><span>경기</span><b>${fin}<small>/${ms.length}</small></b></button><button data-mtab="ranking"><span>MVP</span><b class="${mvp?'mvpb':''}">${mvp?esc(dn(mvp)):'–'}</b></button></div>
     <div class="seg mtabs">${tabs.map(([k,l])=>`<button data-mtab="${k}" aria-pressed="${S.meetTab===k}">${l}</button>`).join('')}</div></div>`;
 }
@@ -1048,7 +1060,7 @@ function viewHome(){
   const next=sm.find(m=>m.date>=TODAY);const last=sm.filter(m=>m.date<TODAY).slice(-1)[0];const show=next||last;
   if(show){const d=pd(show.date),ms=meetMatches(show.id),fin=ms.filter(done).length,isT=show.date===TODAY;
     h+=`<button class="mcard nextm" data-meet="${show.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
-      <div class="mid"><span class="eyebrow" style="font-size:10px;letter-spacing:.2em">${isT?'Today':next?'Next Matchday':'Last Matchday'}</span><div class="mtitle">${esc(show.title||show.place||'매치데이')}</div><div class="mmeta">참가 ${attOf(show).length}명 · 경기 ${fin}/${ms.length}</div></div>${isT?'<span class="st today">TODAY</span>':next?`<span class="st up">D-${Math.round((pd(show.date)-pd(TODAY))/864e5)}</span>`:'<span class="st fin">FINAL</span>'}</button>`;
+      <div class="mid"><span class="eyebrow" style="font-size:10px;letter-spacing:.2em">${isT?'Today':next?'Next Matchday':'Last Matchday'}</span><div class="mtitle">${esc(show.title||show.place||'매치데이')}</div><div class="mmeta">${show.time?esc(show.time)+' · ':''}참가 ${attOf(show).length}명 · 경기 ${fin}/${ms.length}</div></div>${isT?'<span class="st today">TODAY</span>':next?`<span class="st up">D-${Math.round((pd(show.date)-pd(TODAY))/864e5)}</span>`:'<span class="st fin">FINAL</span>'}</button>`;
   }
   const rows=seasonRows('all').filter(r=>r.p>0);
   h+=`<div class="between" style="padding:4px 4px 0"><span class="h1" style="font-size:16px">실시간 랭킹 <span class="cnt-chip">${rows.length}명</span></span><button class="mini blue" data-act="copy-season">${IC.copy}카톡 복사</button></div>`;
@@ -1238,6 +1250,34 @@ function qmSave(){
   S.qm={date:q.date,meetId:q.meetId,type:q.type,a:[null,null],b:[null,null],sa:null,sb:null};render();toTop();
   toast(`저장했어요. ${q.sa===q.sb?'무승부':(q.sa>q.sb?a:b).map(dn).join('·')+' 승'}${dl?` ${sgn(Math.abs(dl.a))}P`:''}`);
 }
+function meetInfoModal(m){
+  const venues=[...new Set([...BASE_VENUES,...S.meets.map(x=>x.place).filter(Boolean)])];
+  const st={place:m.place||'',env:m.env||'야외',surface:m.surface||'하드',custom:!!m.place&&!venues.includes(m.place)};
+  openModal('매치데이 정보',`<div class="field"><span class="lbl">타이틀</span><label class="inp">${IC.spark}<input id="mi-title" type="text" value="${esc(m.title||'')}" placeholder="예: 알로하!"></label></div>
+    <div class="g2"><div class="field"><span class="lbl">날짜</span><label class="inp">${IC.cal}<input id="mi-date" type="date" value="${esc(m.date)}"></label></div>
+      <div class="field"><span class="lbl">시간</span><label class="inp">${IC.n_hist}<input id="mi-time" type="time" value="${esc(m.time||'')}"></label></div></div>
+    <div class="field"><span class="lbl">장소</span><div class="venues" id="mi-venues">${venues.map(v=>`<button class="venue" data-mv="${esc(v)}">${IC.pin}<span>${esc(v)}</span></button>`).join('')}<button class="venue add" data-mv="">${IC.plus}<span>직접 입력</span></button></div>
+      <label class="inp" id="mi-plw">${IC.pin}<input id="mi-place" type="text" value="${esc(st.custom?st.place:'')}" placeholder="장소 이름"></label></div>
+    <div class="field"><span class="lbl">환경</span><div class="seg" id="mi-env">${['야외','실내'].map(v=>`<button data-me="${v}">${v}</button>`).join('')}</div></div>
+    <div class="field"><span class="lbl">코트 종류</span><div class="seg" id="mi-sf">${['하드','클레이','인조잔디'].map(v=>`<button data-ms="${v}">${v}</button>`).join('')}</div></div>
+    <button class="btn-navy" id="mi-save">저장</button>`,el=>{
+    const draw=()=>{
+      el.querySelectorAll('[data-mv]').forEach(b=>b.setAttribute('aria-pressed',st.custom?b.dataset.mv==='':b.dataset.mv===st.place));
+      el.querySelector('#mi-plw').hidden=!st.custom;
+      el.querySelectorAll('[data-me]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.me===st.env));
+      el.querySelectorAll('[data-ms]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.ms===st.surface));
+    };
+    el.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const v=b.dataset.mv;if(v===''){st.custom=true;draw();el.querySelector('#mi-place').focus()}else{st.custom=false;st.place=v;draw()}});
+    el.querySelectorAll('[data-me]').forEach(b=>b.onclick=()=>{st.env=b.dataset.me;draw()});
+    el.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>{st.surface=b.dataset.ms;draw()});
+    el.querySelector('#mi-save').onclick=()=>{
+      const v=k=>el.querySelector(k).value.trim();const date=v('#mi-date');if(!date){toast('날짜를 선택해 주세요.');return}
+      const place=st.custom?v('#mi-place'):st.place;const cur=S.meets.find(x=>x.id===m.id)||m;
+      closeModal();put('meets',{...cur,title:v('#mi-title'),date,time:v('#mi-time'),place,env:st.env,surface:st.surface});S.season=+date.slice(0,4);toast('매치데이 정보를 저장했어요.');
+    };
+    draw();
+  });
+}
 function attModal(m){
   const sel=new Set(attOf(m));
   const draw=el=>{
@@ -1370,11 +1410,11 @@ function memberModal(id){
 
 /* ---------- actions ---------- */
 function syncDraft(){const d=S.draft;if(!d)return;const g=s=>{const e=$(s);return e?e.value:null};
-  const v=g('#d-date');if(v!==null)d.date=v;const t=g('#d-title');if(t!==null)d.title=t;const p=g('#d-place');if(p!==null)d.place=p}
+  const v=g('#d-date');if(v!==null)d.date=v;const t=g('#d-title');if(t!==null)d.title=t;const tm=g('#d-time');if(tm!==null)d.time=tm;const p=g('#d-place');if(p!==null)d.place=p}
 function openNew(meet){
   S.editId=meet?meet.id:null;
-  S.draft=meet?{date:meet.date,title:meet.title||'',place:meet.place||BASE_VENUES[0],env:meet.env||'야외',surface:meet.surface||'하드',attendees:(meet.attendees||[]).slice()}
-    :{date:TODAY,title:'',place:BASE_VENUES[0],env:'야외',surface:'하드',attendees:[]};
+  S.draft=meet?{date:meet.date,time:meet.time||'',title:meet.title||'',place:meet.place||BASE_VENUES[0],env:meet.env||'야외',surface:meet.surface||'하드',attendees:(meet.attendees||[]).slice()}
+    :{date:TODAY,time:'',title:'',place:BASE_VENUES[0],env:'야외',surface:'하드',attendees:[]};
   const venues=[...new Set([...BASE_VENUES,...S.meets.map(m=>m.place).filter(Boolean)])];
   S.draft.customVenue=!venues.includes(S.draft.place);
   S.view='new';render();toTop();
@@ -1383,7 +1423,7 @@ function go(){
   syncDraft();const d=S.draft;
   if(!d.date){toast('날짜를 선택해 주세요.');return}
   const base=S.editId?S.meets.find(m=>m.id===S.editId):{};
-  const obj={...base,id:S.editId||uid(),date:d.date,title:d.title.trim(),place:(d.place||'').trim(),env:d.env,surface:d.surface,attendees:d.attendees.slice(),createdAt:base.createdAt||Date.now()};
+  const obj={...base,id:S.editId||uid(),date:d.date,time:d.time||'',title:d.title.trim(),place:(d.place||'').trim(),env:d.env,surface:d.surface,attendees:d.attendees.slice(),createdAt:base.createdAt||Date.now()};
   const wasEdit=!!S.editId;
   S.season=+d.date.slice(0,4);S.view='meet';S.meetId=obj.id;
   if(!wasEdit){S.meetTab='matches';S.build={step:'choose',preview:null,drafts:[]}}
@@ -1421,8 +1461,8 @@ function bConfirm(){
 document.addEventListener('click',e=>{
   const t=e.target.closest('button,[data-act]');if(!t)return;
   const d=t.dataset;const m=curMeet();
-  if(t.id==='c-rm'||d.pick!==undefined||d.ico!==undefined||d.fab!==undefined||d.k!==undefined||d.n!==undefined||d.asel!==undefined)return;
-  const NEED=['club-edit','new','edit-meet','edit-att','build','add-member','clear-empty','del-meet','m-all','m-clr','pin-clear'];
+  if(t.id==='c-rm'||d.mv!==undefined||d.me!==undefined||d.ms!==undefined||d.pick!==undefined||d.ico!==undefined||d.fab!==undefined||d.k!==undefined||d.n!==undefined||d.asel!==undefined)return;
+  const NEED=['meet-info','club-edit','new','edit-meet','edit-att','build','add-member','clear-empty','del-meet','m-all','m-clr','pin-clear'];
   if((NEED.includes(d.act)||d.delmatch||(d.act==='pin-set'&&cfg().pin))&&!isAdmin()){adminLogin(()=>{const again=document.querySelector(d.act?`[data-act="${d.act}"]`:`[data-delmatch="${d.delmatch}"]`);again&&again.click()});return}
   if(d.scoreb){scoreModal(d.scoreb);return}
   if(d.club){selectClub(d.club);return}
@@ -1470,6 +1510,7 @@ document.addEventListener('click',e=>{
     case 'd-all':syncDraft();S.draft.attendees=S.members.map(x=>x.id);render();break;
     case 'd-clr':syncDraft();S.draft.attendees=[];render();break;
     case 'edit-att':m&&attModal(m);break;
+    case 'meet-info':m&&meetInfoModal(m);break;
     case 'edit-meet':m&&openNew(m);break;
     case 'add-member':memberModal(null);break;
     case 'build':S.build={step:'choose',preview:null,drafts:[]};render();toTop();break;
