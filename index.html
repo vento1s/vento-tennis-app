@@ -1050,10 +1050,6 @@ function viewHome(){
     h+=`<button class="mcard nextm" data-meet="${show.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
       <div class="mid"><span class="eyebrow" style="font-size:10px;letter-spacing:.2em">${isT?'Today':next?'Next Matchday':'Last Matchday'}</span><div class="mtitle">${esc(show.title||show.place||'매치데이')}</div><div class="mmeta">참가 ${attOf(show).length}명 · 경기 ${fin}/${ms.length}</div></div>${isT?'<span class="st today">TODAY</span>':next?`<span class="st up">D-${Math.round((pd(show.date)-pd(TODAY))/864e5)}</span>`:'<span class="st fin">FINAL</span>'}</button>`;
   }
-  h+=`<div class="tiles t3">
-    <button class="tile" data-nav="season"><span class="eyebrow">Ranking</span><b>클럽 순위</b><span class="ti">${IC.n_rank}</span><small>P 순위표</small></button>
-    <button class="tile" data-nav="roster"><span class="eyebrow">Players</span><b>선수 관리</b><span class="ti">${IC.n_roster}</span><small>${ids.length}명</small></button>
-    <button class="tile" data-nav="history"><span class="eyebrow">History</span><b>경기 기록</b><span class="ti">${IC.n_hist}</span><small>${played}경기</small></button></div>`;
   const rows=seasonRows('all').filter(r=>r.p>0);
   h+=`<div class="between" style="padding:4px 4px 0"><span class="h1" style="font-size:16px">실시간 랭킹 <span class="cnt-chip">${rows.length}명</span></span><button class="mini blue" data-act="copy-season">${IC.copy}카톡 복사</button></div>`;
   h+=rows.length?`<div class="hlist">${rows.slice(0,5).map((r,i)=>{const ld=lastDelta(r.id);return `<button class="lr" data-member="${r.id}"><span class="lr-n ${i<3?'r'+(i+1):''}">${i===0?IC.crown:i+1}</span>
