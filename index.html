@@ -856,7 +856,7 @@ function renderHead(){
   else if(S.view==='meet'){const m=curMeet();h=(S.build?`<button class="back" data-act="b-back" aria-label="이전 단계">${IC.back}</button>`:`<button class="back" data-go="feed" aria-label="뒤로">${IC.back}</button>`)+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`}
   else h=`<button class="back" data-go="${S.view==='new'&&S.editId?'meet':S.view==='quick'?(S.qmFrom||'home'):'feed'}" aria-label="뒤로">${IC.back}</button>`+logo;
   $('#head').innerHTML=h;
-  document.querySelector('.top').hidden=S.view==='home';
+  document.querySelector('.top').hidden=['home','season','roster','history','feed'].includes(S.view);
 }
 
 /* ---------- views ---------- */
