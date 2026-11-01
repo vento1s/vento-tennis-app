@@ -469,6 +469,39 @@ body::before{background:var(--bg)!important}
 .mcard{grid-template-columns:auto 1fr!important}
 .mdate{gap:1px}
 .mdate .st{margin-top:5px;font-size:10px;padding:3px 7px;border-radius:6px;letter-spacing:.06em}
+.evc{display:grid;gap:12px;background:var(--card);border:1px solid rgba(255,255,255,.05);border-radius:20px;padding:14px;text-align:left;width:100%}
+.evc:active{border-color:var(--blue)}
+.evc.today{border-color:rgba(255,212,0,.45);background:linear-gradient(160deg,rgba(255,212,0,.07),var(--card) 55%)}
+.ev-top{display:grid;grid-template-columns:62px 1fr;gap:13px;align-items:start}
+.ev-date{background:var(--navy);border-radius:14px;display:grid;justify-items:center;padding:7px 0 8px;line-height:1}
+.ev-date span{font-family:var(--f-sport);font-weight:900;font-size:11px;letter-spacing:.14em;color:var(--blue)}
+.ev-date b{font-family:var(--f-sport);font-style:italic;font-weight:900;font-size:30px;color:var(--ink);margin:3px 0 2px}
+.ev-date i{font-style:normal;font-family:var(--f-sport);font-weight:700;font-size:10.5px;letter-spacing:.1em;color:var(--ink-2);opacity:.7}
+.evc.today .ev-date{background:var(--gold)} .evc.today .ev-date *{color:var(--on-gold)!important;opacity:1}
+.ev-main{display:grid;gap:7px;min-width:0}
+.ev-th{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.ev-th b{font-weight:900;font-style:italic;font-size:19px;line-height:1.25;min-width:0;text-wrap:balance}
+.ev-l{display:grid;gap:6px;justify-items:stretch}
+.ev-l .st{text-align:center;font-size:10.5px;padding:3px 0;border-radius:7px}
+.ev-info{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13.5px;color:var(--ink-2)}
+.ev-info span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.ev-info svg{width:14px;height:14px;color:var(--blue)}
+.ev-tags{display:flex;gap:5px;flex-wrap:wrap}
+.ev-tags i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--ink-2);background:var(--field);border:1px solid var(--line);padding:2px 9px;border-radius:999px}
+.ev-foot{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:11px;min-width:0}
+.avs{display:flex;flex:none}
+.avs .av{width:26px;height:26px;font-size:11px;margin-left:-7px;box-shadow:0 0 0 2px var(--card)}
+.avs .av:first-child{margin-left:0}
+.av.more{background:var(--field-2);color:var(--ink-2);font-size:10.5px}
+.ev-n{font-size:13px;color:var(--muted);white-space:nowrap}
+.ev-n b{color:var(--ink);font-family:var(--f-sport);font-style:italic}
+.ev-r{margin-left:auto;display:flex;align-items:center;gap:8px;min-width:0}
+.ev-s{font-size:12px;font-weight:800;color:var(--blue);background:rgba(10,143,216,.12);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.ev-s b{font-family:var(--f-sport);font-style:italic}
+.ev-s.done{color:var(--ink-2);background:var(--field)}
+.ev-mvp{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-mvp svg{width:13px;height:13px;flex:none}
+.feed{gap:10px}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -916,13 +949,22 @@ function loadingView(){
   return `<div class="empty" style="background:none;box-shadow:none"><div class="spin" aria-hidden="true"></div><p class="muted">기록을 불러오는 중…</p></div>`;
 }
 
+const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 function evCard(m){
-  const ms=meetMatches(m.id),fin=ms.filter(done).length,d=pd(m.date),mvp=mvpOf(m);
-  const st=m.date===TODAY?'<span class="st today">TODAY</span>':m.date>TODAY?`<span class="st up">D-${Math.round((pd(m.date)-pd(TODAY))/864e5)}</span>`:fin?'<span class="st fin">FINAL</span>':'<span class="st none">NO RECORD</span>';
-  const meta=[m.time,m.title?(m.place||'장소 미정'):'',[m.env,m.surface].filter(Boolean).join(' · ')].filter(Boolean).map(esc).join(' · ');
-  return `<button class="mcard" data-meet="${m.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span>${st}</div>
-    <div class="mid"><div class="mtitle">${esc(m.title||m.place||'매치데이')}</div><div class="mmeta">${meta}</div>
-    <div class="mmeta">참가 ${attOf(m).length}명 · ${ms.length?`경기 ${fin}/${ms.length}`:'대진 전'}${mvp?` · <span class="mvp">MVP ${esc(dn(mvp))}</span>`:''}</div></div></button>`;
+  const ms=meetMatches(m.id),fin=ms.filter(done).length,d=pd(m.date),mvp=mvpOf(m),isT=m.date===TODAY,up=m.date>TODAY;
+  const dd=Math.round((pd(m.date)-pd(TODAY))/864e5);
+  const st=isT?'<span class="st today">TODAY</span>':up?`<span class="st up">D-${dd}</span>`:fin?'<span class="st fin">FINAL</span>':'<span class="st none">NO RECORD</span>';
+  const att=attOf(m),show=att.slice(0,5);
+  const tags=[m.env,m.surface].filter(Boolean);
+  const prog=!ms.length?'<span class="ev-s">대진 전</span>':fin===ms.length?`<span class="ev-s done">경기 ${ms.length} 완료</span>`:`<span class="ev-s">경기 <b>${fin}</b>/${ms.length}</span>`;
+  return `<button class="evc ${isT?'today':''}" data-meet="${m.id}">
+    <div class="ev-top"><div class="ev-l"><div class="ev-date"><span>${MON[d.getMonth()]}</span><b class="tab-n">${pad(d.getDate())}</b><i>${DOW[d.getDay()]}</i></div>${st}</div>
+      <div class="ev-main"><div class="ev-th"><b>${esc(m.title||m.place||'매치데이')}</b></div>
+        <div class="ev-info">${m.time?`<span>${IC.n_hist}${esc(m.time)}</span>`:''}${m.place?`<span>${IC.pin}${esc(m.place)}</span>`:''}</div>
+        ${tags.length?`<div class="ev-tags">${tags.map(t=>`<i>${esc(t)}</i>`).join('')}</div>`:''}</div></div>
+    <div class="ev-foot"><span class="avs">${show.map(id=>avatar(id,false)).join('')}${att.length>show.length?`<span class="av more">+${att.length-show.length}</span>`:''}</span>
+      <span class="ev-n">${att.length?`참가 <b>${att.length}</b>명`:'참가자 없음'}</span>
+      <span class="ev-r">${mvp?`<span class="ev-mvp">${IC.crown}${esc(dn(mvp))}</span>`:''}${prog}</span></div></button>`;
 }
 function viewFeed(){
   if(S.loading)return loadingView();
@@ -1109,10 +1151,7 @@ function viewHome(){
   let h=`<div class="between"><button class="upbar" data-nav="clubs">${IC.back}<span>내 클럽</span><em>${allClubs().length}개</em></button><button class="admpill ${am?'on':''}" data-act="admin-panel">${IC.lock}${am?'관리자 모드':'관리자'}</button></div><div class="club"><div class="club-top">${clubPic(c)}<div class="club-t">${c.region?`<span class="club-r">${esc(c.region)}</span>`:''}<b>${esc(c.name)}</b>${c.intro?`<span>${esc(c.intro)}</span>`:''}</div><button class="mini" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button></div>
     <div class="kpis"><button data-nav="roster"><span>등록 선수</span><b>${ids.length}<small>명</small></b></button><button data-nav="history"><span>${S.season} 경기</span><b>${played}<small>경기</small></b></button><button data-nav="season"><span>평균 P</span><b>${avg}<small>P</small></b></button></div></div>`;
   const next=sm.find(m=>m.date>=TODAY);const last=sm.filter(m=>m.date<TODAY).slice(-1)[0];const show=next||last;
-  if(show){const d=pd(show.date),ms=meetMatches(show.id),fin=ms.filter(done).length,isT=show.date===TODAY;
-    h+=`<button class="mcard nextm" data-meet="${show.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span>${isT?'<span class="st today">TODAY</span>':next?`<span class="st up">D-${Math.round((pd(show.date)-pd(TODAY))/864e5)}</span>`:'<span class="st fin">FINAL</span>'}</div>
-      <div class="mid"><div class="mtitle">${esc(show.title||show.place||'매치데이')}</div><div class="mmeta">${show.time?esc(show.time)+' · ':''}참가 ${attOf(show).length}명 · 경기 ${fin}/${ms.length}</div></div></button>`;
-  }
+  if(show)h+=evCard(show);
   const rows=seasonRows('all').filter(r=>r.p>0);
   h+=`<div class="between" style="padding:4px 4px 0"><span class="h1" style="font-size:16px">실시간 랭킹 <span class="cnt-chip">${rows.length}명</span></span><button class="mini" data-nav="season">전체 보기</button></div>`;
   h+=rows.length?`<div class="hlist">${rows.slice(0,5).map((r,i)=>{const ld=lastDelta(r.id);return `<button class="lr" data-member="${r.id}"><span class="lr-n ${i<3?'r'+(i+1):''}">${i===0?IC.crown:i+1}</span>
