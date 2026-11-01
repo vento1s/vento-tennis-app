@@ -1057,7 +1057,7 @@ function viewBuilder(m){
   }
   // random / seed
   if(!b.preview){
-    let h=head(b.step==='seed'?'시드와 경기 설정':'경기 설정',b.step==='seed'?'시드는 P(포인트) 순으로 미리 정렬돼 있어요. 필요하면 순서를 바꿔 주세요.':'');
+    let h=`<div class="bhead"><span class="eyebrow">${esc(modeName(b.step))}</span></div>`;
     if(b.step==='seed')h+=`<div class="card">${seedList(m)}</div>`;
     return h+settingsCard();
   }
