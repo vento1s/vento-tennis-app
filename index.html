@@ -466,6 +466,9 @@ body::before{background:var(--bg)!important}
 .mh-date.today{background:var(--gold);color:var(--on-gold)}
 .mh-date.today span{color:var(--on-gold)}
 .mhero .club-t{align-self:center}
+.mcard{grid-template-columns:auto 1fr!important}
+.mdate{gap:1px}
+.mdate .st{margin-top:5px;font-size:10px;padding:3px 7px;border-radius:6px;letter-spacing:.06em}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -917,9 +920,9 @@ function evCard(m){
   const ms=meetMatches(m.id),fin=ms.filter(done).length,d=pd(m.date),mvp=mvpOf(m);
   const st=m.date===TODAY?'<span class="st today">TODAY</span>':m.date>TODAY?`<span class="st up">D-${Math.round((pd(m.date)-pd(TODAY))/864e5)}</span>`:fin?'<span class="st fin">FINAL</span>':'<span class="st none">NO RECORD</span>';
   const meta=[m.time,m.title?(m.place||'장소 미정'):'',[m.env,m.surface].filter(Boolean).join(' · ')].filter(Boolean).map(esc).join(' · ');
-  return `<button class="mcard" data-meet="${m.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
+  return `<button class="mcard" data-meet="${m.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span>${st}</div>
     <div class="mid"><div class="mtitle">${esc(m.title||m.place||'매치데이')}</div><div class="mmeta">${meta}</div>
-    <div class="mmeta">참가 ${attOf(m).length}명 · ${ms.length?`경기 ${fin}/${ms.length}`:'대진 전'}${mvp?` · <span class="mvp">MVP ${esc(dn(mvp))}</span>`:''}</div></div>${st}</button>`;
+    <div class="mmeta">참가 ${attOf(m).length}명 · ${ms.length?`경기 ${fin}/${ms.length}`:'대진 전'}${mvp?` · <span class="mvp">MVP ${esc(dn(mvp))}</span>`:''}</div></div></button>`;
 }
 function viewFeed(){
   if(S.loading)return loadingView();
@@ -1107,8 +1110,8 @@ function viewHome(){
     <div class="kpis"><button data-nav="roster"><span>등록 선수</span><b>${ids.length}<small>명</small></b></button><button data-nav="history"><span>${S.season} 경기</span><b>${played}<small>경기</small></b></button><button data-nav="season"><span>평균 P</span><b>${avg}<small>P</small></b></button></div></div>`;
   const next=sm.find(m=>m.date>=TODAY);const last=sm.filter(m=>m.date<TODAY).slice(-1)[0];const show=next||last;
   if(show){const d=pd(show.date),ms=meetMatches(show.id),fin=ms.filter(done).length,isT=show.date===TODAY;
-    h+=`<button class="mcard nextm" data-meet="${show.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
-      <div class="mid"><div class="mtitle">${esc(show.title||show.place||'매치데이')}</div><div class="mmeta">${show.time?esc(show.time)+' · ':''}참가 ${attOf(show).length}명 · 경기 ${fin}/${ms.length}</div></div>${isT?'<span class="st today">TODAY</span>':next?`<span class="st up">D-${Math.round((pd(show.date)-pd(TODAY))/864e5)}</span>`:'<span class="st fin">FINAL</span>'}</button>`;
+    h+=`<button class="mcard nextm" data-meet="${show.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span>${isT?'<span class="st today">TODAY</span>':next?`<span class="st up">D-${Math.round((pd(show.date)-pd(TODAY))/864e5)}</span>`:'<span class="st fin">FINAL</span>'}</div>
+      <div class="mid"><div class="mtitle">${esc(show.title||show.place||'매치데이')}</div><div class="mmeta">${show.time?esc(show.time)+' · ':''}참가 ${attOf(show).length}명 · 경기 ${fin}/${ms.length}</div></div></button>`;
   }
   const rows=seasonRows('all').filter(r=>r.p>0);
   h+=`<div class="between" style="padding:4px 4px 0"><span class="h1" style="font-size:16px">실시간 랭킹 <span class="cnt-chip">${rows.length}명</span></span><button class="mini" data-nav="season">전체 보기</button></div>`;
