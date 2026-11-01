@@ -448,6 +448,8 @@ main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
 .camb{position:absolute;right:-4px;bottom:-4px;width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;box-shadow:0 0 0 3px var(--card)}
 .camb svg{width:14px;height:14px}
 .pcard.ed{border-color:rgba(10,143,216,.35);border-style:dashed}
+.ssel{appearance:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-family:var(--f-sport);font-style:italic;font-weight:900;font-size:12.5px;color:var(--ink-2)}
+.bnav button span{white-space:nowrap}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -882,7 +884,7 @@ function renderHead(){
   let h='';
   if(S.view==='clubs')h=logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
   else if(TOP.includes(S.view))h=`<button class="back" data-nav="clubs" aria-label="내 클럽 목록으로">${IC.back}</button>`+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
-  else if(S.view==='meet'){const m=curMeet();h=(S.build?`<button class="back" data-act="b-back" aria-label="이전 단계">${IC.back}</button>`:`<button class="back" data-go="feed" aria-label="뒤로">${IC.back}</button>`)+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`}
+  else if(S.view==='meet'){const m=curMeet();h=(S.build?`<button class="back" data-act="b-back" aria-label="이전 단계">${IC.back}</button>`:`<button class="back" data-nav="feed" aria-label="이벤트 목록으로">${IC.back}</button>`)+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`}
   else h=`<button class="back" data-go="${S.view==='new'&&S.editId?'meet':S.view==='quick'?(S.qmFrom||'home'):'feed'}" aria-label="뒤로">${IC.back}</button>`+logo;
   $('#head').innerHTML=h;
   document.querySelector('.top').hidden=['home','season','roster','history','feed'].includes(S.view);
@@ -894,25 +896,26 @@ function loadingView(){
   return `<div class="empty" style="background:none;box-shadow:none"><div class="spin" aria-hidden="true"></div><p class="muted">기록을 불러오는 중…</p></div>`;
 }
 
+function evCard(m){
+  const ms=meetMatches(m.id),fin=ms.filter(done).length,d=pd(m.date),mvp=mvpOf(m);
+  const st=m.date===TODAY?'<span class="st today">TODAY</span>':m.date>TODAY?`<span class="st up">D-${Math.round((pd(m.date)-pd(TODAY))/864e5)}</span>`:fin?'<span class="st fin">FINAL</span>':'<span class="st none">NO RECORD</span>';
+  const meta=[m.time,m.title?(m.place||'장소 미정'):'',[m.env,m.surface].filter(Boolean).join(' · ')].filter(Boolean).map(esc).join(' · ');
+  return `<button class="mcard" data-meet="${m.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
+    <div class="mid"><div class="mtitle">${esc(m.title||m.place||'매치데이')}</div><div class="mmeta">${meta}</div>
+    <div class="mmeta">참가 ${attOf(m).length}명 · ${ms.length?`경기 ${fin}/${ms.length}`:'대진 전'}${mvp?` · <span class="mvp">MVP ${esc(dn(mvp))}</span>`:''}</div></div>${st}</button>`;
+}
 function viewFeed(){
   if(S.loading)return loadingView();
   const sm=seasonMeets();const past=sm.filter(m=>m.date<TODAY).length;
   const ys=new Set([now.getFullYear(),S.season]);S.meets.forEach(m=>m.date&&ys.add(+m.date.slice(0,4)));
   const n=Math.max(TARGET,sm.length);
-  let h=`<div class="between"><h2 class="h1">Tournament Feed</h2><button class="btn-blue" data-act="new">${IC.plus}NEW MATCHDAY</button></div>`;
-  h+=`<div class="season"><div class="between"><span class="eyebrow">Season</span><select id="season" aria-label="시즌">${[...ys].sort((a,b)=>b-a).map(y=>`<option value="${y}" ${y===S.season?'selected':''}>${y}</option>`).join('')}</select></div>
-    <div class="between" style="align-items:flex-end"><div class="cnt tab-n">${past}<span> / ${TARGET}</span></div><div class="muted" style="font-size:12.5px;text-align:right">진행 ${past}회 · 예정 ${sm.length-past}회<br>연간 ${TARGET}회 목표</div></div>
+  const up=sm.filter(m=>m.date>=TODAY),old=sm.filter(m=>m.date<TODAY).reverse();
+  let h=`<div class="between"><h2 class="h1">Events</h2><select id="season" class="ssel" aria-label="시즌">${[...ys].sort((a,b)=>b-a).map(y=>`<option value="${y}" ${y===S.season?'selected':''}>${y} 시즌</option>`).join('')}</select></div>`;
+  h+=`<div class="season"><div class="between" style="align-items:flex-end"><div class="cnt tab-n">${past}<span> / ${TARGET}회</span></div><div class="muted" style="font-size:12.5px;text-align:right">진행 ${past} · 예정 ${sm.length-past}</div></div>
     <div class="dots" style="grid-template-columns:repeat(${n},1fr)">${Array.from({length:n},(_,i)=>{const m=sm[i];return `<i class="${m?(m.date<TODAY?'on':'up'):''}"></i>`}).join('')}</div></div>`;
-  if(!sm.length){
-    h+=`<div class="empty"><p class="h1" style="font-size:17px">NO MATCHDAY YET</p><p class="muted">${S.season} 시즌 매치데이가 아직 없어요.<br>날짜와 장소, 참가자를 정해서 첫 매치데이를 열어 보세요.</p><button class="btn-blue" data-act="new">${IC.plus}NEW MATCHDAY</button></div>`;
-  }else{
-    h+=`<div class="feed">${sm.slice().reverse().map(m=>{
-      const ms=meetMatches(m.id),fin=ms.filter(done).length,d=pd(m.date),mvp=mvpOf(m);
-      const st=m.date===TODAY?'<span class="st today">TODAY</span>':m.date>TODAY?'<span class="st up">UPCOMING</span>':fin?'<span class="st fin">FINAL</span>':'<span class="st none">NO RECORD</span>';
-      return `<button class="mcard" data-meet="${m.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
-        <div class="mid"><div class="mtitle">${esc(m.title||'매치데이')}</div><div class="mmeta">${esc(m.place||'장소 미정')}${m.env?' · '+esc(m.env):''}${m.surface?' · '+esc(m.surface):''}</div>
-        <div class="mmeta">참가 ${(m.attendees||[]).length}명 · 경기 ${fin}/${ms.length}${mvp?` · <span class="mvp">MVP ${esc(dn(mvp))}</span>`:''}</div></div>${st}</button>`}).join('')}</div>`;
-  }
+  if(!sm.length)return h+`<div class="empty"><p class="big" style="font-size:19px">등록된 매치데이가 없어요</p><p class="hint">오른쪽 아래 + 버튼 → 새 매치데이로 만들어 보세요.</p></div>`;
+  if(up.length)h+=`<span class="lbl" style="padding:4px 4px 0">예정 ${up.length}</span><div class="feed">${up.map(evCard).join('')}</div>`;
+  if(old.length)h+=`<span class="lbl" style="padding:6px 4px 0">지난 매치데이 ${old.length}</span><div class="feed">${old.map(evCard).join('')}</div>`;
   return h;
 }
 
@@ -1171,9 +1174,7 @@ function viewHistory(){
   const sm=seasonMeets(),pastN=sm.filter(m=>m.date<TODAY).length;
   const open=sm.filter(m=>!meetMatches(m.id).some(done)).sort((a,b)=>a.date.localeCompare(b.date));
   h=h.replace('<span class="lbl">'+S.season+' · '+ms.length+'경기</span>',`<span class="lbl" style="white-space:nowrap">매치데이 ${pastN}/${TARGET} · ${ms.length}경기</span>`);
-  if(open.length){h+=`<div class="hgroup"><div class="round-h"><b style="font-size:14px">예정 · 기록 전</b></div><div class="feed">${open.map(m=>{const d=pd(m.date),n=meetMatches(m.id).length;
-    return `<button class="mcard" data-meet="${m.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div><div class="mid"><div class="mtitle">${esc(m.title||m.place||'매치데이')}</div><div class="mmeta">참가 ${attOf(m).length}명 · ${n?`대진 ${n}경기`:'대진 전'}</div></div>${m.date===TODAY?'<span class="st today">TODAY</span>':m.date>TODAY?'<span class="st up">UPCOMING</span>':'<span class="st none">NO RECORD</span>'}</button>`}).join('')}</div></div>`}
-  if(!ms.length)return h+(open.length?'':`<div class="empty"><p class="big" style="font-size:19px">기록된 경기가 없어요</p><p class="hint">+ 버튼으로 새 매치데이를 만들거나 경기를 바로 기록해 보세요.</p></div>`);
+  if(!ms.length)return h+(`<div class="empty"><p class="big" style="font-size:19px">기록된 경기가 없어요</p><p class="hint">+ 버튼으로 새 매치데이를 만들거나 경기를 바로 기록해 보세요.</p></div>`);
   const meets=sm.slice().reverse().filter(m=>ms.some(x=>x.meetId===m.id));
   meets.forEach(m=>{
     const d=pd(m.date);const list=ms.filter(x=>x.meetId===m.id).sort((a,b)=>(b.round-a.round)||(a.court-b.court));
@@ -1219,7 +1220,7 @@ function render(){
   }
   let nav='';
   if(!bar){
-    const items=((TOP.includes(S.view)&&S.view!=='clubs')||(S.view==='meet'&&!b))?[['home','CLUB',IC.n_club,S.view==='home'||S.view==='feed'||S.view==='meet'],['roster','PLAYERS',IC.n_roster,S.view==='roster'],['season','RANKING',IC.n_rank,S.view==='season'],['history','HISTORY',IC.n_hist,S.view==='history']]:[];
+    const items=((TOP.includes(S.view)&&S.view!=='clubs')||(S.view==='meet'&&!b))?[['home','CLUB',IC.n_club,S.view==='home'],['feed','EVENTS',IC.n_feed,S.view==='feed'||S.view==='meet'],['roster','PLAYERS',IC.n_roster,S.view==='roster'],['season','RANKING',IC.n_rank,S.view==='season'],['history','HISTORY',IC.n_hist,S.view==='history']]:[];
     if(items.length)nav=`<nav class="bnav" aria-label="메뉴"><div class="bnav-in" style="grid-template-columns:repeat(${items.length},1fr)">${items.map(([v,l,ic,on])=>`<button data-nav="${v}" ${on?'aria-current="page"':''}>${ic}<span>${l}</span></button>`).join('')}</div></nav>
       <button class="fabf" data-act="fab" aria-label="${S.view==='clubs'?'새 클럽 만들기':'추가하기'}">${IC.plus}</button>`;
   }
