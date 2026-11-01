@@ -1,4 +1,4 @@
-# 송사모 테니스 · SSM Championship Manager
+# Vento Tennis Manager
 
 송정사우나모임 테니스 클럽 매니저. 정적 웹앱(index.html 하나)으로 Vercel에 바로 배포됩니다.
 
