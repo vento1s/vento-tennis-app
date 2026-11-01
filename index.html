@@ -949,7 +949,7 @@ function roundsHtml(list,att,cardFn){
     return `<div class="round"><div class="round-h"><b>ROUND ${r}</b>${rest.length?`<span class="rest">REST · ${rest.map(dn).map(esc).join(', ')}</span>`:''}</div>${rm.map(cardFn).join('')}</div>`;
   }).join('');
 }
-const AVC=['#0A8FD8','#2D6CDF','#13A38B','#7A5AF8','#D9822B','#C2417A','#3B82A0','#5B8C2A'];
+const AVC=['#0F4C86'];
 function avatar(id,win){const n=dn(id);let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))>>>0;
   const mm=S.members.find(x=>x.id===id);
   return `<span class="av ${win?'win':''}" style="--avc:${AVC[h%AVC.length]}">${mm&&mm.photo?`<img src="${esc(mm.photo)}" alt="">`:esc(n.slice(0,1))}</span>`}
@@ -1481,7 +1481,7 @@ function memberModal(id,openEdit){
     const mi=el.querySelector('#m-img');if(mi)mi.onclick=()=>{closeModal();imgImportModal()};
     const sv=el.querySelector('#m-save');if(!sv)return;
     let photo=cur.photo||'',hand=cur.hand||'',side=cur.side||'';
-    const drawP=()=>{el.querySelector('#m-prev').innerHTML=`<span class="av lg" style="--avc:#2D6CDF">${photo?`<img src="${esc(photo)}" alt="">`:esc((cur.short||cur.name||'?').slice(0,1))}</span>`;el.querySelector('#m-rm').hidden=!photo};
+    const drawP=()=>{el.querySelector('#m-prev').innerHTML=`<span class="av lg" style="--avc:#0F4C86">${photo?`<img src="${esc(photo)}" alt="">`:esc((cur.short||cur.name||'?').slice(0,1))}</span>`;el.querySelector('#m-rm').hidden=!photo};
     el.querySelector('#m-file').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{photo=await squareImage(f,240);drawP()}catch(err){toast('이 사진은 불러올 수 없어요.')}};
     el.querySelector('#m-rm').onclick=()=>{photo='';el.querySelector('#m-file').value='';drawP()};
     el.querySelectorAll('[data-mh]').forEach(b=>b.onclick=()=>{hand=b.dataset.mh;el.querySelectorAll('[data-mh]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.mh===hand))});
