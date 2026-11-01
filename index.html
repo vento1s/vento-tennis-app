@@ -437,6 +437,17 @@ main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
 .pc-l{font-size:10.5px;color:var(--dim);margin-top:-3px}
 .sel{appearance:none;background:none;border:0;outline:0;flex:1;min-width:0;font-weight:900;font-style:italic;font-size:16px;color:var(--ink)}
 .sel option{color:#000}
+.admpill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--ink-2);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:999px}
+.admpill svg{width:13px;height:13px}
+.admpill.on{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
+.mini.gold{background:var(--gold);color:var(--on-gold)}
+.editbar{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.45;color:var(--ink-2);background:rgba(10,143,216,.12);border:1px solid rgba(10,143,216,.3);padding:10px 12px;border-radius:14px}
+.editbar svg{width:16px;height:16px;flex:none;color:var(--blue);margin-top:1px}
+.editbar.warn{background:rgba(255,212,0,.08);border-color:rgba(255,212,0,.3)} .editbar.warn svg{color:var(--gold)}
+.avw{position:relative;display:inline-grid}
+.camb{position:absolute;right:-4px;bottom:-4px;width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;box-shadow:0 0 0 3px var(--card)}
+.camb svg{width:14px;height:14px}
+.pcard.ed{border-color:rgba(10,143,216,.35);border-style:dashed}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -603,6 +614,7 @@ const IC={
   cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"><path d="M4 8h3l1.6-2.5h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.4"/></svg>',
   swap:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg>',
   n_club:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"><path d="M3.5 8.5l4.2 3.3L12 5.5l4.3 6.3 4.2-3.3-1.7 9H5.2z"/><path d="M5.5 20.5h13"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>',
   trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.6 4M17 6h2.5a2.5 2.5 0 0 1-2.6 4M12 14v3M8 21l1.5-4h5L16 21"/></svg>'
 };
 
@@ -1073,7 +1085,8 @@ function viewHome(){
   if(S.loading)return loadingView();
   const c=clubInfo(S.clubId);const sm=seasonMeets();const played=seasonMatches().filter(done).length;
   const ids=S.members.map(m=>m.id);const avg=ids.length?Math.round(ids.reduce((t,id)=>t+pOf(id),0)/ids.length):P0;
-  let h=`<button class="upbar" data-nav="clubs">${IC.back}<span>내 클럽</span><em>${allClubs().length}개</em></button><div class="club"><div class="club-top">${clubPic(c)}<div class="club-t">${c.region?`<span class="club-r">${esc(c.region)}</span>`:''}<b>${esc(c.name)}</b>${c.intro?`<span>${esc(c.intro)}</span>`:''}</div><button class="mini" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button></div>
+  const am=cfg().pin&&isAdmin();
+  let h=`<div class="between"><button class="upbar" data-nav="clubs">${IC.back}<span>내 클럽</span><em>${allClubs().length}개</em></button><button class="admpill ${am?'on':''}" data-act="admin-panel">${IC.lock}${am?'관리자 모드':'관리자'}</button></div><div class="club"><div class="club-top">${clubPic(c)}<div class="club-t">${c.region?`<span class="club-r">${esc(c.region)}</span>`:''}<b>${esc(c.name)}</b>${c.intro?`<span>${esc(c.intro)}</span>`:''}</div><button class="mini" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button></div>
     <div class="kpis"><button data-nav="roster"><span>등록 선수</span><b>${ids.length}<small>명</small></b></button><button data-nav="history"><span>${S.season} 경기</span><b>${played}<small>경기</small></b></button><button data-nav="season"><span>평균 P</span><b>${avg}<small>P</small></b></button></div></div>`;
   const next=sm.find(m=>m.date>=TODAY);const last=sm.filter(m=>m.date<TODAY).slice(-1)[0];const show=next||last;
   if(show){const d=pd(show.date),ms=meetMatches(show.id),fin=ms.filter(done).length,isT=show.date===TODAY;
@@ -1112,11 +1125,13 @@ function viewPlayers(){
   if(S.pSort==='att')list=list.slice().sort((a,b)=>(att[b.id]||0)-(att[a.id]||0));
   else if(S.pSort==='recent')list=list.slice().sort((a,b)=>(last[b.id]||'').localeCompare(last[a.id]||''));
   else list=list.slice().sort((a,b)=>dn(a.id).localeCompare(dn(b.id),'ko'));
-  let h=`<div class="between"><h2 class="h1">Players</h2><span class="lbl">${S.members.length}명</span></div>
+  const ed=S.pEdit&&isAdmin();
+  let h=`<div class="between"><h2 class="h1">Players <span class="lbl" style="vertical-align:3px">${S.members.length}명</span></h2><button class="mini ${ed?'gold':'blue'}" data-act="p-edit">${ed?'편집 완료':IC.edit+'편집'}</button></div>
+    ${ed?`<div class="editbar">${IC.cam}<span>카드의 카메라를 눌러 사진을 바로 넣고, 카드를 누르면 정보를 고칠 수 있어요.</span></div>`:''}
     <div class="seg">${[['name','이름순'],['att','출석순'],['recent','최근 참가']].map(([k,l])=>`<button data-psort="${k}" aria-pressed="${S.pSort===k}">${l}</button>`).join('')}</div>`;
   if(!list.length)return h+`<div class="empty"><p class="big" style="font-size:19px">등록된 선수가 없어요</p><p class="hint">오른쪽 아래 + 버튼으로 선수를 추가해 보세요.</p></div>`;
   h+=`<div class="pgrid">${list.map(m=>{const tags=pTags(m),a=att[m.id]||0,l=last[m.id];
-    return `<button class="pcard" data-member="${m.id}">${avatar(m.id,false).replace('class="av','class="av lg')}
+    return `<button class="pcard ${ed?'ed':''}" data-member="${m.id}"><span class="avw">${avatar(m.id,false).replace('class="av','class="av lg')}${ed?`<span class="camb" data-pcam="${m.id}" role="button" aria-label="${esc(dn(m.id))} 사진 넣기">${IC.cam}</span>`:''}</span>
       <span class="pc-t"><b>${esc(dn(m.id))}</b>${m.name&&m.name!==dn(m.id)?`<small>${esc(m.name)}</small>`:''}</span>
       ${tags.length?`<span class="pc-tags">${tags.map(x=>`<i>${esc(x)}</i>`).join('')}</span>`:''}
       <span class="pc-f"><span>출석 <b>${a}</b>/${TARGET}</span><span class="pc-p">${pOf(m.id)}P</span></span>
@@ -1411,7 +1426,30 @@ function imgImportModal(){
     };
   });
 }
-function memberModal(id){
+function pickPhoto(id){
+  const go=()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.hidden=true;document.body.appendChild(inp);
+    inp.onchange=async()=>{const f=inp.files&&inp.files[0];inp.remove();if(!f)return;try{const ph=await squareImage(f,240);const m=S.members.find(x=>x.id===id);if(m){put('members',{...m,photo:ph});toast(`${dn(id)} 사진을 넣었어요.`)}}catch(err){toast('이 사진은 불러올 수 없어요.')}};
+    inp.click()};
+  if(!isAdmin()){adminLogin(go);return}go();
+}
+function adminPanel(){
+  const c=cfg();
+  if(c.pin&&!isAdmin()){adminLogin(adminPanel);return}
+  const it=(act,ic,t,sub)=>`<button class="mode lg" data-ap="${act}"><span class="ic">${ic}</span><span class="tx"><b>${t}</b><small>${sub}</small></span><span class="chev">${IC.next}</span></button>`;
+  openModal('관리자',`${!c.pin?`<div class="editbar warn">${IC.lock}<span>아직 비밀번호가 없어서 누구나 수정할 수 있어요. 비밀번호를 정하면 이 기기만 관리자가 돼요.</span></div>`:`<div class="editbar">${IC.lock}<span>이 기기에서 관리자 모드를 쓰고 있어요.</span></div>`}
+    <div class="modes">${it('players',IC.cam,'선수 사진 · 정보 편집','카드에서 바로 사진을 넣고 정보를 고쳐요')}${it('import',IC.n_roster,'이미지로 선수 등록','카톡 명단 캡처로 한 번에 추가')}${it('club',IC.edit,'클럽 정보 수정','이름 · 지역 · 소개 · 클럽 사진')}${it('pin',IC.lock,c.pin?'비밀번호 변경':'관리자 비밀번호 설정','4자리 숫자')}</div>
+    ${c.pin?`<div class="row"><button class="btn-ghost" data-ap="logout" style="flex:1">회원 모드로 전환</button><button class="btn-ghost" data-ap="clear" style="flex:1">비밀번호 해제</button></div>`:''}`,el=>{
+    el.querySelectorAll('[data-ap]').forEach(b=>b.onclick=()=>{const k=b.dataset.ap;closeModal();
+      if(k==='players'){S.view='roster';S.pEdit=true;render();toTop()}
+      else if(k==='import')imgImportModal();
+      else if(k==='club')clubModal(false);
+      else if(k==='pin')setPinFlow();
+      else if(k==='logout'){setKey('');S.pEdit=false;render();toast('회원 모드로 전환했어요.')}
+      else if(k==='clear')clearPin();
+    });
+  });
+}
+function memberModal(id,openEdit){
   const m=S.members.find(x=>x.id===id);const isNew=!m;const cur=m||{name:'',short:''};const adm=isAdmin();
   if(isNew&&!adm){adminLogin(()=>memberModal(null));return}
   let stat='';
@@ -1439,7 +1477,7 @@ function memberModal(id){
     <button class="btn-navy" id="m-save">${isNew?'추가':'저장'}</button>
     ${isNew?`<button class="btn-ghost imgadd" id="m-img">${IC.cam}이미지로 한 번에 추가<small>카톡 명단 · 투표 · 대진표 캡처</small></button>`:''}
     ${isNew?'':`<div id="m-delbox"><button class="btn-danger" id="m-del">멤버 삭제</button></div>`}`;
-  openModal(isNew?'멤버 추가':esc(dn(id)),`${stat}${adm?(isNew?form:`<details class="edit"><summary>정보 수정</summary><div class="edit-b">${form}</div></details>`):`<button class="link-back" data-act="login" style="justify-self:center">정보 수정은 관리자 로그인 후</button>`}`,el=>{
+  openModal(isNew?'멤버 추가':esc(dn(id)),`${stat}${adm?(isNew?form:`<details class="edit" ${openEdit?'open':''}><summary>정보 수정</summary><div class="edit-b">${form}</div></details>`):`<button class="link-back" data-act="login" style="justify-self:center">정보 수정은 관리자 로그인 후</button>`}`,el=>{
     const mi=el.querySelector('#m-img');if(mi)mi.onclick=()=>{closeModal();imgImportModal()};
     const sv=el.querySelector('#m-save');if(!sv)return;
     let photo=cur.photo||'',hand=cur.hand||'',side=cur.side||'';
@@ -1517,7 +1555,7 @@ function bConfirm(){
 document.addEventListener('click',e=>{
   const t=e.target.closest('button,[data-act]');if(!t)return;
   const d=t.dataset;const m=curMeet();
-  if(t.id==='c-rm'||t.id==='m-rm'||d.mh!==undefined||d.msd!==undefined||d.mv!==undefined||d.me!==undefined||d.ms!==undefined||d.pick!==undefined||d.ico!==undefined||d.fab!==undefined||d.k!==undefined||d.n!==undefined||d.asel!==undefined)return;
+  if(d.ap!==undefined||t.id==='c-rm'||t.id==='m-rm'||d.mh!==undefined||d.msd!==undefined||d.mv!==undefined||d.me!==undefined||d.ms!==undefined||d.pick!==undefined||d.ico!==undefined||d.fab!==undefined||d.k!==undefined||d.n!==undefined||d.asel!==undefined)return;
   const NEED=['meet-info','club-edit','new','edit-meet','edit-att','build','add-member','clear-empty','del-meet','m-all','m-clr','pin-clear'];
   if((NEED.includes(d.act)||d.delmatch||(d.act==='pin-set'&&cfg().pin))&&!isAdmin()){adminLogin(()=>{const again=document.querySelector(d.act?`[data-act="${d.act}"]`:`[data-delmatch="${d.delmatch}"]`);again&&again.click()});return}
   if(d.psort){S.pSort=d.psort;render();return}
@@ -1529,8 +1567,9 @@ document.addEventListener('click',e=>{
   if(d.hist){S.histType=d.hist;render();return}
   if(d.go){if(d.go==='meet'&&S.editId){S.view='meet';S.editId=null;S.draft=null}else{S.view=d.go;S.editId=null;S.draft=null;if(d.go==='feed'){S.meetId=null;S.build=null}}render();toTop();return}
   if(d.meet){S.view='meet';S.meetId=d.meet;S.meetTab='matches';S.build=null;S.man={type:'D',court:1,a:[null,null],b:[null,null]};render();toTop();return}
-  if(d.member){memberModal(d.member);return}
-  if(d.nav){S.view=d.nav;S.meetId=null;S.build=null;S.editId=null;S.draft=null;render();toTop();return}
+  if(e.target.closest('[data-pcam]')){const id=e.target.closest('[data-pcam]').dataset.pcam;pickPhoto(id);return}
+  if(d.member){memberModal(d.member,S.view==='roster'&&S.pEdit);return}
+  if(d.nav){if(d.nav!=='roster')S.pEdit=false;S.view=d.nav;S.meetId=null;S.build=null;S.editId=null;S.draft=null;render();toTop();return}
   if(d.mtab){S.meetTab=d.mtab;render();toTop();return}
   if(d.rank){S.rankType=d.rank;render();return}
   if(d.gtype){S.gen.type=d.gtype;render();return}
@@ -1548,6 +1587,8 @@ document.addEventListener('click',e=>{
   if(d.delmatch){confirmModal('경기 삭제','이 경기와 입력한 점수를 지울까요?','삭제',()=>del('matches',d.delmatch));return}
   switch(d.act){
     case 'close':closeModal();break;
+    case 'admin-panel':adminPanel();break;
+    case 'p-edit':if(S.pEdit){S.pEdit=false;render()}else if(isAdmin()){S.pEdit=true;render()}else adminLogin(()=>{S.pEdit=true;render()});break;
     case 'fab':if(S.view==='clubs')clubModal(true);else fabModal();break;
     case 'club-edit':clubModal(false);break;
     case 'club-new':clubModal(true);break;
