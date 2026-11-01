@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#002A52"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Vento Tennis Manager</title>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1E2123"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Vento Tennis Manager</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -462,6 +462,7 @@ main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
 .lobby-b{font-family:var(--f-sport);font-weight:900;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
 .lobby-h h2{margin:0;font-size:24px;font-weight:900;color:var(--ink)}
 .lobby-h h2 span{font-size:14px;color:var(--muted);font-weight:700;margin-left:4px}
+body::before{background:var(--bg)!important}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -900,7 +901,7 @@ function renderHead(){
   else h=`<button class="back" data-go="${S.view==='new'&&S.editId?'meet':S.view==='quick'?(S.qmFrom||'home'):'feed'}" aria-label="뒤로">${IC.back}</button>`+logo;
   $('#head').innerHTML=h;
   document.querySelector('.top').classList.toggle('lobby',S.view==='clubs');
-  document.querySelector('.top').hidden=['clubs','home','season','roster','history','feed'].includes(S.view);
+  document.querySelector('.top').hidden=true;
 }
 
 /* ---------- views ---------- */
@@ -1220,6 +1221,13 @@ function render(){
   else if(S.view==='clubs')html=viewClubs();
   else html=viewHome();
   if(S.local&&!S.loading)html+=`<p class="note">이 화면에서는 기록이 이 기기에만 저장돼요.</p>`;
+  if(!TOP.includes(S.view)&&!S.loading){
+    let bb='';
+    if(S.view==='meet')bb=S.build?`<button class="upbar" data-act="b-back">${IC.back}<span>이전 단계</span></button>`:`<button class="upbar" data-nav="feed">${IC.back}<span>이벤트</span></button>`;
+    else if(S.view==='new')bb=`<button class="upbar" data-go="${S.editId?'meet':'feed'}">${IC.back}<span>${S.editId?'매치데이':'이벤트'}</span></button>`;
+    else if(S.view==='quick')bb=`<button class="upbar" data-go="${S.qmFrom||'home'}">${IC.back}<span>뒤로</span></button>`;
+    html=bb+html;
+  }
   $('#view').innerHTML=html;
   let bar='';const b=S.build;
   if(S.view==='new')bar=`<button class="go" data-act="go">${S.editId?'SAVE':'GO'} ${IC.next}</button>`;
