@@ -1005,10 +1005,9 @@ function viewMeet(m){
     return h+`<div class="hof"><div class="hof-h">${IC.trophy}<span class="eyebrow">Hall of Fame</span><h2>MATCH STANDINGS</h2></div><div class="hof-b">${rows.length?rankRows(rows,dayDelta(m.id)):`<p class="muted" style="text-align:center;padding:20px;margin:0">참가자를 먼저 선택해 주세요.</p>`}</div></div>
       <div class="row"><button class="btn-blue" data-act="copy-meet" style="flex:1;justify-content:center">${IC.copy}카톡 결과 복사</button><button class="btn-ghost" data-go="season" style="flex:1">시즌 순위</button></div>`;
   }
-  h+=`<div class="card tight"><span class="eyebrow">Matchday Info</span><div class="infoline"><b>${esc(m.title||'매치데이')}</b><span class="muted">${esc(fmtK(m.date))} · ${esc(m.place||'장소 미정')}${m.env?' · '+esc(m.env):''}${m.surface?' · '+esc(m.surface):''} · 참가 ${att.length}명</span></div>
-    <button class="btn-ghost" data-act="edit-meet">정보 · 참가자 수정</button></div>
-    <div class="card tight"><span class="eyebrow">Matches</span><div class="infoline"><b>경기 ${ms.length}개 · 기록 ${ms.filter(done).length}개</b><span class="muted">경기는 MATCHES 탭에서 만들고 점수를 넣어요.</span></div>
-    <div class="row"><button class="btn-ghost" data-act="build" style="flex:1">매치 생성하기</button>${ms.some(x=>x.sa==null&&x.sb==null)?`<button class="btn-ghost" data-act="clear-empty" style="flex:1">빈 경기 삭제</button>`:''}</div></div>`;
+  h+=`<div class="card tight"><span class="eyebrow">Matches</span><div class="infoline"><b>경기 ${ms.length}개 · 기록 ${ms.filter(done).length}개</b><span class="muted">경기는 경기 탭에서 만들고 점수를 넣어요.</span></div>
+    <div class="row"><button class="btn-ghost" data-act="build" style="flex:1">매치 생성하기</button>${ms.some(x=>x.sa==null&&x.sb==null)?`<button class="btn-ghost" data-act="clear-empty" style="flex:1">빈 경기 삭제</button>`:''}</div></div>
+    <button class="btn-danger" data-act="del-cur-meet">이 매치데이 삭제</button>`;
   return h;
 }
 
@@ -1568,7 +1567,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('button,[data-act]');if(!t)return;
   const d=t.dataset;const m=curMeet();
   if(d.ap!==undefined||t.id==='c-rm'||t.id==='m-rm'||d.mh!==undefined||d.msd!==undefined||d.mv!==undefined||d.me!==undefined||d.ms!==undefined||d.pick!==undefined||d.ico!==undefined||d.fab!==undefined||d.k!==undefined||d.n!==undefined||d.asel!==undefined)return;
-  const NEED=['meet-info','club-edit','new','edit-meet','edit-att','build','add-member','clear-empty','del-meet','m-all','m-clr','pin-clear'];
+  const NEED=['del-cur-meet','meet-info','club-edit','new','edit-meet','edit-att','build','add-member','clear-empty','del-meet','m-all','m-clr','pin-clear'];
   if((NEED.includes(d.act)||d.delmatch||(d.act==='pin-set'&&cfg().pin))&&!isAdmin()){adminLogin(()=>{const again=document.querySelector(d.act?`[data-act="${d.act}"]`:`[data-delmatch="${d.delmatch}"]`);again&&again.click()});return}
   if(d.psort){S.pSort=d.psort;render();return}
   if(d.scoreb){scoreModal(d.scoreb);return}
@@ -1631,6 +1630,7 @@ document.addEventListener('click',e=>{
     case 'seed-reset':if(m){const {seeds,...rest}=m;flipSeeds(()=>put('meets',rest),null);toast('P 순서로 다시 정렬했어요.')}break;
     case 'man-add':m&&manAdd();break;
     case 'clear-empty':if(m){const em=meetMatches(m.id).filter(x=>x.sa==null&&x.sb==null);confirmModal('빈 경기 삭제',`점수가 없는 경기 ${em.length}개를 지울까요?`,'삭제',()=>em.forEach(x=>del('matches',x.id)))}break;
+    case 'del-cur-meet':if(m)confirmModal('매치데이 삭제',`${esc(fmtK(m.date))} 매치데이와 경기 ${meetMatches(m.id).length}개 기록을 모두 지울까요?`,'모두 삭제',()=>{meetMatches(m.id).forEach(x=>del('matches',x.id));S.view='feed';S.meetId=null;del('meets',m.id)});break;
     case 'del-meet':{const mm=S.meets.find(x=>x.id===S.editId);if(mm)confirmModal('매치데이 삭제',`${esc(fmtK(mm.date))} 매치데이와 경기 ${meetMatches(mm.id).length}개 기록을 모두 지울까요?`,'모두 삭제',()=>{meetMatches(mm.id).forEach(x=>del('matches',x.id));S.view='feed';S.meetId=null;S.editId=null;S.draft=null;del('meets',mm.id)})}break;
   }
 });
