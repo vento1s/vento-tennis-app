@@ -505,6 +505,8 @@ body::before{background:var(--bg)!important}
 .wl{display:inline-flex;gap:5px;font-family:var(--f-body)!important;font-style:normal!important;font-size:14px!important}
 .wl em{font-style:normal;font-weight:900}
 .wl .w{color:#FF5A5F} .wl .l{color:#4EA8FF} .wl .d{color:var(--muted)}
+.rk .d b.pt small{font-size:11px;margin-left:1px;color:var(--muted)}
+.lgtag{color:var(--gold)!important;font-weight:800}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -1000,9 +1002,12 @@ function viewNew(){
   return h;
 }
 
-function rankRows(rows,day){
+const LG={w:3,d:2,l:1};
+const lgPts=r=>r.w*LG.w+r.d*LG.d+r.l*LG.l;
+function rankRows(rows,day,league){
   return rows.map((r,i)=>{const ranked=r.p>0;const rk=ranked?i+1:'–';const cls=ranked&&i<3?'r'+(i+1):'';
-    const last=day?(()=>{const v=day[r.id]||0;return `<span class="c d"><b class="${v>0?'pos':v<0?'neg':''}">${sgn(v)}</b><span>POINT</span></span>`})()
+    const gd=r.gf-r.ga;
+    const last=league?`<span class="c d"><b class="pt">${lgPts(r)}<small>점</small></b><span>${gd>0?'+':''}${gd} 득실</span></span>`:day?(()=>{const v=day[r.id]||0;return `<span class="c d"><b class="${v>0?'pos':v<0?'neg':''}">${sgn(v)}</b><span>POINT</span></span>`})()
       :`<span class="c d"><b class="pt">${pOf(r.id)}</b><span>POINT</span></span>`;
     return `<button class="rk ${cls}" data-member="${r.id}"><span class="n">${rk}</span><span class="nm">${esc(dn(r.id))}${ranked&&i===0?IC.spark:''}</span>
     <span class="c"><b class="wl"><em class="w">${r.w}승</em>${r.d?`<em class="d">${r.d}무</em>`:''}<em class="l">${r.l}패</em></b><span>RECORD</span></span><span class="c att"><b class="blue">${pct(r)}</b><span>RATE</span></span>${last}</button>`}).join('');
@@ -1038,7 +1043,7 @@ function meetHero(m){
   const tabs=[['matches','경기'],['ranking','순위'],['admin','관리']];
   return `<div class="club mhero"><div class="club-top"><div class="mh-date ${isT?'today':''}"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
       <div class="club-t"><b>${esc(m.title||m.place||'매치데이')}</b>
-        <span class="mh-meta">${m.time?`<i>${IC.n_hist}${esc(m.time)}</i>`:''}${m.title&&m.place?`<i>${IC.pin}${esc(m.place)}</i>`:''}${m.surface||m.env?`<i>${[m.env,m.surface].filter(Boolean).map(esc).join(' · ')}</i>`:''}${!m.time&&!m.place&&!m.surface&&!m.env?esc(fmtK(m.date)):''}</span></div>
+        <span class="mh-meta">${m.time?`<i>${IC.n_hist}${esc(m.time)}</i>`:''}${m.title&&m.place?`<i>${IC.pin}${esc(m.place)}</i>`:''}${m.surface||m.env?`<i>${[m.env,m.surface].filter(Boolean).map(esc).join(' · ')}</i>`:''}${m.scoring==='league'?`<i class="lgtag">리그 승3·패1</i>`:''}${!m.time&&!m.place&&!m.surface&&!m.env?esc(fmtK(m.date)):''}</span></div>
       <button class="hedit" data-act="meet-info" aria-label="매치데이 정보 수정">${IC.edit}</button></div>
     <div class="kpis"><button data-act="edit-att"><span>참가</span><b>${attOf(m).length}<small>명</small></b></button><button data-mtab="matches"><span>경기</span><b>${fin}<small>/${ms.length}</small></b></button><button data-mtab="ranking"><span>MVP</span><b class="${mvp?'mvpb':''}">${mvp?esc(dn(mvp)):'–'}</b></button></div>
     <div class="seg mtabs">${tabs.map(([k,l])=>`<button data-mtab="${k}" aria-pressed="${S.meetTab===k}">${l}</button>`).join('')}</div></div>`;
@@ -1053,8 +1058,10 @@ function viewMeet(m){
     return h+roundsHtml(ms,att,scoreCard);
   }
   if(S.meetTab==='ranking'){
-    const rows=tally(ms,att,'all');
-    return h+`<div class="hof"><div class="hof-b">${rows.length?rankRows(rows,dayDelta(m.id)):`<p class="muted" style="text-align:center;padding:20px;margin:0">참가자를 먼저 선택해 주세요.</p>`}</div></div>
+    const lg=m.scoring==='league';
+    let rows=tally(ms,att,'all');
+    if(lg)rows=rows.sort((a,b)=>((b.p>0)-(a.p>0))||(lgPts(b)-lgPts(a))||((b.gf-b.ga)-(a.gf-a.ga))||dn(a.id).localeCompare(dn(b.id),'ko'));
+    return h+`${lg?`<p class="hint" style="margin:0;padding:0 4px">리그 점수: 승 ${LG.w}점 · 무 ${LG.d}점 · 패 ${LG.l}점. 같으면 득실 순이에요.</p>`:''}<div class="hof"><div class="hof-b">${rows.length?rankRows(rows,dayDelta(m.id),lg):`<p class="muted" style="text-align:center;padding:20px;margin:0">참가자를 먼저 선택해 주세요.</p>`}</div></div>
       <button class="btn-ghost" data-nav="season" style="justify-self:center">시즌 전체 순위 보기</button>`;
   }
   h+=`<div class="card tight"><span class="eyebrow">Matches</span><div class="infoline"><b>경기 ${ms.length}개 · 기록 ${ms.filter(done).length}개</b><span class="muted">경기는 경기 탭에서 만들고 점수를 넣어요.</span></div>
@@ -1383,7 +1390,11 @@ function meetInfoModal(m){
       <label class="inp" id="mi-plw">${IC.pin}<input id="mi-place" type="text" value="${esc(st.custom?st.place:'')}" placeholder="장소 이름"></label></div>
     <div class="field"><span class="lbl">환경</span><div class="seg" id="mi-env">${['야외','실내'].map(v=>`<button data-me="${v}">${v}</button>`).join('')}</div></div>
     <div class="field"><span class="lbl">코트 종류</span><div class="seg" id="mi-sf">${['하드','클레이','인조잔디'].map(v=>`<button data-ms="${v}">${v}</button>`).join('')}</div></div>
+    <div class="field"><span class="lbl">순위 방식</span><div class="seg" id="mi-sc">${[['','P 포인트'],['league','리그 (승3 · 패1)']].map(([k,l])=>`<button data-msc="${k}">${l}</button>`).join('')}</div></div>
     <button class="btn-navy" id="mi-save">저장</button>`,el=>{
+    let sc=m.scoring||'';
+    const drawSc=()=>el.querySelectorAll('[data-msc]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.msc===sc));
+    el.querySelectorAll('[data-msc]').forEach(b=>b.onclick=()=>{sc=b.dataset.msc;drawSc()});drawSc();
     const draw=()=>{
       el.querySelectorAll('[data-mv]').forEach(b=>b.setAttribute('aria-pressed',st.custom?b.dataset.mv==='':b.dataset.mv===st.place));
       el.querySelector('#mi-plw').hidden=!st.custom;
@@ -1396,7 +1407,7 @@ function meetInfoModal(m){
     el.querySelector('#mi-save').onclick=()=>{
       const v=k=>el.querySelector(k).value.trim();const date=v('#mi-date');if(!date){toast('날짜를 선택해 주세요.');return}
       const place=st.custom?v('#mi-place'):st.place;const cur=S.meets.find(x=>x.id===m.id)||m;
-      closeModal();put('meets',{...cur,title:v('#mi-title'),date,time:v('#mi-time'),place,env:st.env,surface:st.surface});S.season=+date.slice(0,4);toast('매치데이 정보를 저장했어요.');
+      closeModal();const nm={...cur,title:v('#mi-title'),date,time:v('#mi-time'),place,env:st.env,surface:st.surface};if(sc)nm.scoring=sc;else delete nm.scoring;put('meets',nm);S.season=+date.slice(0,4);toast('매치데이 정보를 저장했어요.');
     };
     draw();
   });
@@ -1622,7 +1633,7 @@ function bConfirm(){
 document.addEventListener('click',e=>{
   const t=e.target.closest('button,[data-act]');if(!t)return;
   const d=t.dataset;const m=curMeet();
-  if(d.ap!==undefined||t.id==='c-rm'||t.id==='m-rm'||d.mh!==undefined||d.msd!==undefined||d.mv!==undefined||d.me!==undefined||d.ms!==undefined||d.pick!==undefined||d.ico!==undefined||d.fab!==undefined||d.k!==undefined||d.n!==undefined||d.asel!==undefined)return;
+  if(d.msc!==undefined||d.ap!==undefined||t.id==='c-rm'||t.id==='m-rm'||d.mh!==undefined||d.msd!==undefined||d.mv!==undefined||d.me!==undefined||d.ms!==undefined||d.pick!==undefined||d.ico!==undefined||d.fab!==undefined||d.k!==undefined||d.n!==undefined||d.asel!==undefined)return;
   const NEED=['del-cur-meet','meet-info','club-edit','new','edit-meet','edit-att','build','add-member','clear-empty','del-meet','m-all','m-clr','pin-clear'];
   if((NEED.includes(d.act)||d.delmatch||(d.act==='pin-set'&&cfg().pin))&&!isAdmin()){adminLogin(()=>{const again=document.querySelector(d.act?`[data-act="${d.act}"]`:`[data-delmatch="${d.delmatch}"]`);again&&again.click()});return}
   if(d.psort){S.pSort=d.psort;render();return}
