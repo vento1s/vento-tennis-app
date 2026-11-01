@@ -923,8 +923,6 @@ function viewFeed(){
   const n=Math.max(TARGET,sm.length);
   const up=sm.filter(m=>m.date>=TODAY),old=sm.filter(m=>m.date<TODAY).reverse();
   let h=`<div class="between"><h2 class="h1">Events</h2><select id="season" class="ssel" aria-label="시즌">${[...ys].sort((a,b)=>b-a).map(y=>`<option value="${y}" ${y===S.season?'selected':''}>${y} 시즌</option>`).join('')}</select></div>`;
-  h+=`<div class="season"><div class="between" style="align-items:flex-end"><div class="cnt tab-n">${past}<span> / ${TARGET}회</span></div><div class="muted" style="font-size:12.5px;text-align:right">진행 ${past} · 예정 ${sm.length-past}</div></div>
-    <div class="dots" style="grid-template-columns:repeat(${n},1fr)">${Array.from({length:n},(_,i)=>{const m=sm[i];return `<i class="${m?(m.date<TODAY?'on':'up'):''}"></i>`}).join('')}</div></div>`;
   if(!sm.length)return h+`<div class="empty"><p class="big" style="font-size:19px">등록된 매치데이가 없어요</p><p class="hint">오른쪽 아래 + 버튼 → 새 매치데이로 만들어 보세요.</p></div>`;
   if(up.length)h+=`<span class="lbl" style="padding:4px 4px 0">예정 ${up.length}</span><div class="feed">${up.map(evCard).join('')}</div>`;
   if(old.length)h+=`<span class="lbl" style="padding:6px 4px 0">지난 매치데이 ${old.length}</span><div class="feed">${old.map(evCard).join('')}</div>`;
@@ -1149,7 +1147,7 @@ function viewPlayers(){
     return `<button class="pcard ${ed?'ed':''}" data-member="${m.id}"><span class="avw">${avatar(m.id,false).replace('class="av','class="av lg')}${ed?`<span class="camb" data-pcam="${m.id}" role="button" aria-label="${esc(dn(m.id))} 사진 넣기">${IC.cam}</span>`:''}</span>
       <span class="pc-t"><b>${esc(dn(m.id))}</b>${m.name&&m.name!==dn(m.id)?`<small>${esc(m.name)}</small>`:''}</span>
       ${tags.length?`<span class="pc-tags">${tags.map(x=>`<i>${esc(x)}</i>`).join('')}</span>`:''}
-      <span class="pc-f"><span>출석 <b>${a}</b>/${TARGET}</span><span class="pc-p">${pOf(m.id)}P</span></span>
+      <span class="pc-f"><span>출석 <b>${a}</b>회</span><span class="pc-p">${pOf(m.id)}P</span></span>
       ${l?`<span class="pc-l">최근 ${esc(fmtK(l).replace(/\s\(.\)/,''))}</span>`:''}</button>`}).join('')}</div>
     <p class="note">카드를 누르면 프로필과 전적을 볼 수 있어요.</p>`;
   return h;
@@ -1185,7 +1183,7 @@ function viewHistory(){
     <div class="seg">${[['all','전체'],['D','복식'],['S','단식']].map(([k,l])=>`<button data-hist="${k}" aria-pressed="${t===k}">${l}</button>`).join('')}</div>`;
   const sm=seasonMeets(),pastN=sm.filter(m=>m.date<TODAY).length;
   const open=sm.filter(m=>!meetMatches(m.id).some(done)).sort((a,b)=>a.date.localeCompare(b.date));
-  h=h.replace('<span class="lbl">'+S.season+' · '+ms.length+'경기</span>',`<span class="lbl" style="white-space:nowrap">매치데이 ${pastN}/${TARGET} · ${ms.length}경기</span>`);
+  h=h.replace('<span class="lbl">'+S.season+' · '+ms.length+'경기</span>',`<span class="lbl" style="white-space:nowrap">매치데이 ${pastN}회 · ${ms.length}경기</span>`);
   if(!ms.length)return h+(`<div class="empty"><p class="big" style="font-size:19px">기록된 경기가 없어요</p><p class="hint">+ 버튼으로 새 매치데이를 만들거나 경기를 바로 기록해 보세요.</p></div>`);
   const meets=sm.slice().reverse().filter(m=>ms.some(x=>x.meetId===m.id));
   meets.forEach(m=>{
