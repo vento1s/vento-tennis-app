@@ -893,8 +893,7 @@ function renderHead(){
   const cname=S.view==='clubs'?'내 클럽':clubInfo(S.clubId).name;
   const logo=`<div class="logo"><div class="logo-r"><span class="ssm">SSM</span><span class="ttl">${esc(cname)}</span></div><div class="sub">CHAMPIONSHIP MANAGER <span class="ver">v1.1</span>${S.view!=='clubs'&&cfg().pin&&isAdmin()?'<span class="admtag">ADMIN</span>':''}</div></div>`;
   let h='';
-  if(S.view==='clubs')h=`<div class="brand"><span class="bmark" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11.5" fill="#D8F24A"/><path d="M6.6 9.6c4.6 2.9 4.6 9.9 0 12.8M25.4 9.6c-4.6 2.9-4.6 9.9 0 12.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></span>
-    <span class="btxt"><b>Tennis Manager</b><small>클럽 · 매치 · 랭킹</small></span></div>`;
+  if(S.view==='clubs')h=`<div class="brand"><span class="btxt"><b>Tennis Manager</b><small>클럽 · 매치 · 랭킹</small></span></div>`;
   else if(TOP.includes(S.view))h=`<button class="back" data-nav="clubs" aria-label="내 클럽 목록으로">${IC.back}</button>`+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
   else if(S.view==='meet'){const m=curMeet();h=(S.build?`<button class="back" data-act="b-back" aria-label="이전 단계">${IC.back}</button>`:`<button class="back" data-nav="feed" aria-label="이벤트 목록으로">${IC.back}</button>`)+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`}
   else h=`<button class="back" data-go="${S.view==='new'&&S.editId?'meet':S.view==='quick'?(S.qmFrom||'home'):'feed'}" aria-label="뒤로">${IC.back}</button>`+logo;
