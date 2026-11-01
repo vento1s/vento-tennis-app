@@ -420,6 +420,23 @@ main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
 .modal .g2 .inp{padding:0 10px;gap:7px}
 .modal .g2 .inp input{font-size:14.5px}
 .inp input[type=time]::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:auto;height:auto;opacity:0;cursor:pointer}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pcard{background:var(--card);border-radius:18px;padding:14px 12px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;border:1px solid transparent;min-width:0}
+.pcard:active{border-color:var(--blue)}
+.av.lg{width:58px;height:58px;font-size:22px;box-shadow:0 0 0 2px var(--card),0 0 0 4px rgba(10,143,216,.35)}
+.av img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.av{overflow:hidden}
+.pc-t{display:grid;gap:1px;min-width:0;max-width:100%}
+.pc-t b{font-weight:900;font-style:italic;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-t small{font-size:11.5px;color:var(--muted)}
+.pc-tags{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
+.pc-tags i{font-style:normal;font-size:10.5px;font-weight:800;color:var(--ink-2);background:var(--field);padding:2px 7px;border-radius:999px}
+.pc-f{margin-top:auto;display:flex;justify-content:space-between;width:100%;border-top:1px solid var(--line);padding-top:7px;font-size:11.5px;color:var(--muted)}
+.pc-f b{color:var(--ink);font-family:var(--f-sport);font-style:italic;font-size:14px}
+.pc-p{font-family:var(--f-sport);font-style:italic;font-weight:900;color:var(--blue);font-size:13px}
+.pc-l{font-size:10.5px;color:var(--dim);margin-top:-3px}
+.sel{appearance:none;background:none;border:0;outline:0;flex:1;min-width:0;font-weight:900;font-style:italic;font-size:16px;color:var(--ink)}
+.sel option{color:#000}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -545,7 +562,7 @@ const now=new Date();
 const TODAY=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
 const TARGET=6;
 const BASE_VENUES=['스포원','송정테니스파크'];
-const S={members:[],meets:[],matches:[],config:[],clubs:[],clubId:(()=>{try{return localStorage.getItem('ssm-club')||'default'}catch(e){return 'default'}})(),histType:'all',view:'clubs',qm:null,meetId:null,meetTab:'matches',season:now.getFullYear(),loading:true,local:false,rankType:'all',
+const S={members:[],meets:[],matches:[],config:[],clubs:[],clubId:(()=>{try{return localStorage.getItem('ssm-club')||'default'}catch(e){return 'default'}})(),histType:'all',pSort:'name',view:'clubs',qm:null,meetId:null,meetTab:'matches',season:now.getFullYear(),loading:true,local:false,rankType:'all',
   gen:{type:'D',courts:2,rounds:3},build:null,draft:null,editId:null,man:{type:'D',court:1,a:[null,null],b:[null,null]}};
 let DB=null,pending=false,drag=null;
 const LS='ssm-tennis-v1';
@@ -922,7 +939,8 @@ function roundsHtml(list,att,cardFn){
 }
 const AVC=['#0A8FD8','#2D6CDF','#13A38B','#7A5AF8','#D9822B','#C2417A','#3B82A0','#5B8C2A'];
 function avatar(id,win){const n=dn(id);let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))>>>0;
-  return `<span class="av ${win?'win':''}" style="--avc:${AVC[h%AVC.length]}">${esc(n.slice(0,1))}</span>`}
+  const mm=S.members.find(x=>x.id===id);
+  return `<span class="av ${win?'win':''}" style="--avc:${AVC[h%AVC.length]}">${mm&&mm.photo?`<img src="${esc(mm.photo)}" alt="">`:esc(n.slice(0,1))}</span>`}
 function sideHtml(ids,win,lose,right,ptag){
   return `<div class="side ${right?'r':''} ${win?'w':''} ${lose?'l':''}">${ids.map(id=>`<span class="pp">${right?'':avatar(id,win)}<b>${win&&!right?`<i class="cr">${IC.crown}</i>`:''}${esc(dn(id))}${win&&right?`<i class="cr">${IC.crown}</i>`:''}</b>${right?avatar(id,win):''}</span>`).join('')}${ptag||''}</div>`;
 }
@@ -1084,6 +1102,28 @@ function viewQuick(){
     <div class="card"><div class="between"><span class="lbl">Score</span><span class="spvs" style="font-size:22px"><span class="${q.sa!=null&&q.sb!=null&&q.sa>q.sb?'w':''}">${q.sa??'–'}</span><i>:</i><span class="${q.sa!=null&&q.sb!=null&&q.sb>q.sa?'w':''}">${q.sb??'–'}</span></span></div>
       <span class="lbl" style="color:var(--ink-2)">TEAM A</span>${pad('a')}<span class="lbl" style="color:var(--ink-2)">TEAM B</span>${pad('b')}</div>`;
 }
+function pTags(m){const t=[];if(m.years!=null&&m.years!=='')t.push(`구력 ${m.years}년`);if(m.ntrp)t.push(`NTRP ${m.ntrp}`);if(m.hand==='L')t.push('왼손');else if(m.hand==='R')t.push('오른손');if(m.side==='deuce')t.push('듀스');else if(m.side==='ad')t.push('애드');return t}
+function viewPlayers(){
+  if(S.loading)return loadingView();
+  const sm=seasonMeets();const done6=sm.filter(m=>m.date<=TODAY).length||0;
+  const att={},last={};sm.forEach(mt=>attOf(mt).forEach(id=>{att[id]=(att[id]||0)+1;if(mt.date<=TODAY&&(!last[id]||mt.date>last[id]))last[id]=mt.date}));
+  S.meets.forEach(mt=>attOf(mt).forEach(id=>{if(mt.date<=TODAY&&(!last[id]||mt.date>last[id]))last[id]=mt.date}));
+  let list=members();
+  if(S.pSort==='att')list=list.slice().sort((a,b)=>(att[b.id]||0)-(att[a.id]||0));
+  else if(S.pSort==='recent')list=list.slice().sort((a,b)=>(last[b.id]||'').localeCompare(last[a.id]||''));
+  else list=list.slice().sort((a,b)=>dn(a.id).localeCompare(dn(b.id),'ko'));
+  let h=`<div class="between"><h2 class="h1">Players</h2><span class="lbl">${S.members.length}명</span></div>
+    <div class="seg">${[['name','이름순'],['att','출석순'],['recent','최근 참가']].map(([k,l])=>`<button data-psort="${k}" aria-pressed="${S.pSort===k}">${l}</button>`).join('')}</div>`;
+  if(!list.length)return h+`<div class="empty"><p class="big" style="font-size:19px">등록된 선수가 없어요</p><p class="hint">오른쪽 아래 + 버튼으로 선수를 추가해 보세요.</p></div>`;
+  h+=`<div class="pgrid">${list.map(m=>{const tags=pTags(m),a=att[m.id]||0,l=last[m.id];
+    return `<button class="pcard" data-member="${m.id}">${avatar(m.id,false).replace('class="av','class="av lg')}
+      <span class="pc-t"><b>${esc(dn(m.id))}</b>${m.name&&m.name!==dn(m.id)?`<small>${esc(m.name)}</small>`:''}</span>
+      ${tags.length?`<span class="pc-tags">${tags.map(x=>`<i>${esc(x)}</i>`).join('')}</span>`:''}
+      <span class="pc-f"><span>출석 <b>${a}</b>/${TARGET}</span><span class="pc-p">${pOf(m.id)}P</span></span>
+      ${l?`<span class="pc-l">최근 ${esc(fmtK(l).replace(/\s\(.\)/,''))}</span>`:''}</button>`}).join('')}</div>
+    <p class="note">카드를 누르면 프로필과 전적을 볼 수 있어요.</p>`;
+  return h;
+}
 function viewSeason(){
   if(S.loading)return loadingView();
   const rows=seasonRows(S.rankType);
@@ -1146,7 +1186,8 @@ function render(){
   let html;
   if(S.view==='new')html=viewNew();
   else if(S.view==='meet')html=viewMeet(curMeet());
-  else if(S.view==='season'||S.view==='roster')html=viewSeason();
+  else if(S.view==='season')html=viewSeason();
+  else if(S.view==='roster')html=viewPlayers();
   else if(S.view==='history')html=viewHistory();
   else if(S.view==='quick')html=viewQuick();
   else if(S.view==='feed')html=viewFeed();
@@ -1163,7 +1204,7 @@ function render(){
   }
   let nav='';
   if(!bar){
-    const items=((TOP.includes(S.view)&&S.view!=='clubs')||(S.view==='meet'&&!b))?[['home','CLUB',IC.n_club,S.view==='home'||S.view==='feed'||S.view==='meet'],['season','RANKING',IC.n_rank,S.view==='season'||S.view==='roster'],['history','HISTORY',IC.n_hist,S.view==='history']]:[];
+    const items=((TOP.includes(S.view)&&S.view!=='clubs')||(S.view==='meet'&&!b))?[['home','CLUB',IC.n_club,S.view==='home'||S.view==='feed'||S.view==='meet'],['season','RANKING',IC.n_rank,S.view==='season'],['roster','PLAYERS',IC.n_roster,S.view==='roster'],['history','HISTORY',IC.n_hist,S.view==='history']]:[];
     if(items.length)nav=`<nav class="bnav" aria-label="메뉴"><div class="bnav-in" style="grid-template-columns:repeat(${items.length},1fr)">${items.map(([v,l,ic,on])=>`<button data-nav="${v}" ${on?'aria-current="page"':''}>${ic}<span>${l}</span></button>`).join('')}</div></nav>
       <button class="fabf" data-act="fab" aria-label="${S.view==='clubs'?'새 클럽 만들기':'추가하기'}">${IC.plus}</button>`;
   }
@@ -1381,7 +1422,7 @@ function memberModal(id){
     const hist=ELO.hist[id]||[{p:P0}];const p=pOf(id),start=hist[0].p,ch=p-start;
     const order=seasonRows('all').filter(r=>r.p>0).map(r=>r.id);const rk=order.indexOf(id);
     const recent=hist.slice(1).slice(-6);
-    stat=`<div class="prof"><div><span class="eyebrow">${rk>=0?`${S.season} 시즌 ${rk+1}위`:'Point'}</span><div class="pbig tab-n">${p}<small>P</small></div><span class="pch ${ch>0?'pos':ch<0?'neg':''}">시작 ${start} 대비 ${sgn(ch)}</span></div>
+    stat=`<div class="prof"><div><span class="eyebrow">${rk>=0?`${S.season} 시즌 ${rk+1}위`:'Point'}</span><div class="pbig tab-n">${p}<small>P</small></div><span class="pch ${ch>0?'pos':ch<0?'neg':''}">시작 ${start} 대비 ${sgn(ch)}</span>${pTags(m).length?`<span class="pc-tags" style="justify-content:flex-start;margin-top:6px">${pTags(m).map(x=>`<i>${esc(x)}</i>`).join('')}</span>`:''}</div>
       ${recent.length?`<div class="form"><span class="lbl">최근</span><div>${recent.map(h=>`<i class="${h.r||'l'}">${(h.r||'l').toUpperCase()}</i>`).join('')}</div></div>`:''}</div>
       ${sparkline(hist)}
       <div class="stats4"><div class="stat"><b>${a.att}</b><span>ATTEND</span></div><div class="stat"><b>${recS(a)}</b><span>TOTAL</span></div><div class="stat"><b>${recS(d)}</b><span>DOUBLES</span></div><div class="stat"><b>${recS(s)}</b><span>SINGLES</span></div></div>
@@ -1389,6 +1430,11 @@ function memberModal(id){
   }
   const form=`<div class="field"><span class="lbl">Display Name</span><label class="inp"><input id="m-short" type="text" value="${esc(cur.short||'')}" placeholder="예: 벤또" aria-label="표시 이름"></label></div>
     <div class="field"><span class="lbl">Full Name</span><label class="inp"><input id="m-name" type="text" value="${esc(cur.name)}" placeholder="예: 김태윤" aria-label="이름"></label></div>
+    <div class="photo-row"><span id="m-prev"></span><div class="photo-btns"><span class="lbl">사진</span><div class="row"><label class="btn-ghost sm" for="m-file">${IC.cam}사진 선택</label><input type="file" accept="image/*" id="m-file" hidden><button class="btn-ghost sm" id="m-rm">삭제</button></div></div></div>
+    <div class="g2"><div class="field"><span class="lbl">구력 (년)</span><label class="inp"><input id="m-yrs" type="number" inputmode="numeric" min="0" max="60" value="${cur.years??''}" placeholder="예: 5"></label></div>
+      <div class="field"><span class="lbl">NTRP</span><label class="inp"><select id="m-ntrp" class="sel"><option value="">선택 안 함</option>${['2.0','2.5','3.0','3.5','4.0','4.5','5.0'].map(v=>`<option ${cur.ntrp===v?'selected':''}>${v}</option>`).join('')}</select></label></div></div>
+    <div class="field"><span class="lbl">주 사용 손</span><div class="seg" id="m-hand">${[['','미입력'],['R','오른손'],['L','왼손']].map(([k,l])=>`<button data-mh="${k}" aria-pressed="${(cur.hand||'')===k}">${l}</button>`).join('')}</div></div>
+    <div class="field"><span class="lbl">복식 선호 사이드</span><div class="seg" id="m-side">${[['','상관없음'],['deuce','듀스(오른쪽)'],['ad','애드(왼쪽)']].map(([k,l])=>`<button data-msd="${k}" aria-pressed="${(cur.side||'')===k}">${l}</button>`).join('')}</div></div>
     <div class="field"><span class="lbl">시작 P</span><label class="inp"><input id="m-r0" type="number" inputmode="numeric" value="${Number.isFinite(cur.rating0)?cur.rating0:P0}" aria-label="시작 포인트"></label><span class="hint">실력 차이가 크면 시작 점수를 다르게 줄 수 있어요. 기본 ${P0}.</span></div>
     <button class="btn-navy" id="m-save">${isNew?'추가':'저장'}</button>
     ${isNew?`<button class="btn-ghost imgadd" id="m-img">${IC.cam}이미지로 한 번에 추가<small>카톡 명단 · 투표 · 대진표 캡처</small></button>`:''}
@@ -1396,11 +1442,21 @@ function memberModal(id){
   openModal(isNew?'멤버 추가':esc(dn(id)),`${stat}${adm?(isNew?form:`<details class="edit"><summary>정보 수정</summary><div class="edit-b">${form}</div></details>`):`<button class="link-back" data-act="login" style="justify-self:center">정보 수정은 관리자 로그인 후</button>`}`,el=>{
     const mi=el.querySelector('#m-img');if(mi)mi.onclick=()=>{closeModal();imgImportModal()};
     const sv=el.querySelector('#m-save');if(!sv)return;
+    let photo=cur.photo||'',hand=cur.hand||'',side=cur.side||'';
+    const drawP=()=>{el.querySelector('#m-prev').innerHTML=`<span class="av lg" style="--avc:#2D6CDF">${photo?`<img src="${esc(photo)}" alt="">`:esc((cur.short||cur.name||'?').slice(0,1))}</span>`;el.querySelector('#m-rm').hidden=!photo};
+    el.querySelector('#m-file').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{photo=await squareImage(f,240);drawP()}catch(err){toast('이 사진은 불러올 수 없어요.')}};
+    el.querySelector('#m-rm').onclick=()=>{photo='';el.querySelector('#m-file').value='';drawP()};
+    el.querySelectorAll('[data-mh]').forEach(b=>b.onclick=()=>{hand=b.dataset.mh;el.querySelectorAll('[data-mh]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.mh===hand))});
+    el.querySelectorAll('[data-msd]').forEach(b=>b.onclick=()=>{side=b.dataset.msd;el.querySelectorAll('[data-msd]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.msd===side))});
+    drawP();
     sv.onclick=()=>{
       const name=el.querySelector('#m-name').value.trim(),short=el.querySelector('#m-short').value.trim();const r0=Math.round(+el.querySelector('#m-r0').value);
       if(!name&&!short){toast('이름을 입력해 주세요.');return}
       const obj={...cur,id:cur.id||uid(),name:name||short,short:short||name.slice(1)||name,order:cur.order??(S.members.length+1)};
       if(Number.isFinite(r0)&&r0>0&&r0!==P0)obj.rating0=r0;else delete obj.rating0;
+      const yrs=el.querySelector('#m-yrs').value.trim(),ntrp=el.querySelector('#m-ntrp').value;
+      const setOpt=(k,v)=>{if(v!==''&&v!=null)obj[k]=v;else delete obj[k]};
+      setOpt('photo',photo);setOpt('years',yrs===''?'':Math.max(0,Math.round(+yrs)));setOpt('ntrp',ntrp);setOpt('hand',hand);setOpt('side',side);
       closeModal();put('members',obj);toast(isNew?'멤버를 추가했어요.':'저장했어요.');
     };
     const d=el.querySelector('#m-del');
@@ -1461,9 +1517,10 @@ function bConfirm(){
 document.addEventListener('click',e=>{
   const t=e.target.closest('button,[data-act]');if(!t)return;
   const d=t.dataset;const m=curMeet();
-  if(t.id==='c-rm'||d.mv!==undefined||d.me!==undefined||d.ms!==undefined||d.pick!==undefined||d.ico!==undefined||d.fab!==undefined||d.k!==undefined||d.n!==undefined||d.asel!==undefined)return;
+  if(t.id==='c-rm'||t.id==='m-rm'||d.mh!==undefined||d.msd!==undefined||d.mv!==undefined||d.me!==undefined||d.ms!==undefined||d.pick!==undefined||d.ico!==undefined||d.fab!==undefined||d.k!==undefined||d.n!==undefined||d.asel!==undefined)return;
   const NEED=['meet-info','club-edit','new','edit-meet','edit-att','build','add-member','clear-empty','del-meet','m-all','m-clr','pin-clear'];
   if((NEED.includes(d.act)||d.delmatch||(d.act==='pin-set'&&cfg().pin))&&!isAdmin()){adminLogin(()=>{const again=document.querySelector(d.act?`[data-act="${d.act}"]`:`[data-delmatch="${d.delmatch}"]`);again&&again.click()});return}
+  if(d.psort){S.pSort=d.psort;render();return}
   if(d.scoreb){scoreModal(d.scoreb);return}
   if(d.club){selectClub(d.club);return}
   if(d.qslot){qmPick(d.qslot[0],+d.qslot[1]);return}
@@ -1473,7 +1530,7 @@ document.addEventListener('click',e=>{
   if(d.go){if(d.go==='meet'&&S.editId){S.view='meet';S.editId=null;S.draft=null}else{S.view=d.go;S.editId=null;S.draft=null;if(d.go==='feed'){S.meetId=null;S.build=null}}render();toTop();return}
   if(d.meet){S.view='meet';S.meetId=d.meet;S.meetTab='matches';S.build=null;S.man={type:'D',court:1,a:[null,null],b:[null,null]};render();toTop();return}
   if(d.member){memberModal(d.member);return}
-  if(d.nav){S.view=d.nav;S.meetId=null;S.build=null;S.editId=null;S.draft=null;render();if(d.nav==='roster'){const r=document.getElementById('roster-sec');r?r.scrollIntoView({block:'start'}):toTop()}else toTop();return}
+  if(d.nav){S.view=d.nav;S.meetId=null;S.build=null;S.editId=null;S.draft=null;render();toTop();return}
   if(d.mtab){S.meetTab=d.mtab;render();toTop();return}
   if(d.rank){S.rankType=d.rank;render();return}
   if(d.gtype){S.gen.type=d.gtype;render();return}
