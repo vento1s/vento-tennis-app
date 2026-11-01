@@ -1204,7 +1204,7 @@ function render(){
   }
   let nav='';
   if(!bar){
-    const items=((TOP.includes(S.view)&&S.view!=='clubs')||(S.view==='meet'&&!b))?[['home','CLUB',IC.n_club,S.view==='home'||S.view==='feed'||S.view==='meet'],['season','RANKING',IC.n_rank,S.view==='season'],['roster','PLAYERS',IC.n_roster,S.view==='roster'],['history','HISTORY',IC.n_hist,S.view==='history']]:[];
+    const items=((TOP.includes(S.view)&&S.view!=='clubs')||(S.view==='meet'&&!b))?[['home','CLUB',IC.n_club,S.view==='home'||S.view==='feed'||S.view==='meet'],['roster','PLAYERS',IC.n_roster,S.view==='roster'],['season','RANKING',IC.n_rank,S.view==='season'],['history','HISTORY',IC.n_hist,S.view==='history']]:[];
     if(items.length)nav=`<nav class="bnav" aria-label="메뉴"><div class="bnav-in" style="grid-template-columns:repeat(${items.length},1fr)">${items.map(([v,l,ic,on])=>`<button data-nav="${v}" ${on?'aria-current="page"':''}>${ic}<span>${l}</span></button>`).join('')}</div></nav>
       <button class="fabf" data-act="fab" aria-label="${S.view==='clubs'?'새 클럽 만들기':'추가하기'}">${IC.plus}</button>`;
   }
