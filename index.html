@@ -1003,7 +1003,7 @@ function viewMeet(m){
   if(S.meetTab==='ranking'){
     const rows=tally(ms,att,'all');
     return h+`<div class="hof"><div class="hof-h">${IC.trophy}<span class="eyebrow">Hall of Fame</span><h2>MATCH STANDINGS</h2></div><div class="hof-b">${rows.length?rankRows(rows,dayDelta(m.id)):`<p class="muted" style="text-align:center;padding:20px;margin:0">참가자를 먼저 선택해 주세요.</p>`}</div></div>
-      <div class="row"><button class="btn-blue" data-act="copy-meet" style="flex:1;justify-content:center">${IC.copy}카톡 결과 복사</button><button class="btn-ghost" data-go="season" style="flex:1">시즌 순위</button></div>`;
+      <button class="btn-ghost" data-nav="season" style="justify-self:center">시즌 전체 순위 보기</button>`;
   }
   h+=`<div class="card tight"><span class="eyebrow">Matches</span><div class="infoline"><b>경기 ${ms.length}개 · 기록 ${ms.filter(done).length}개</b><span class="muted">경기는 경기 탭에서 만들고 점수를 넣어요.</span></div>
     <div class="row"><button class="btn-ghost" data-act="build" style="flex:1">매치 생성하기</button>${ms.some(x=>x.sa==null&&x.sb==null)?`<button class="btn-ghost" data-act="clear-empty" style="flex:1">빈 경기 삭제</button>`:''}</div></div>
@@ -1107,7 +1107,7 @@ function viewHome(){
       <div class="mid"><span class="eyebrow" style="font-size:10px;letter-spacing:.2em">${isT?'Today':next?'Next Matchday':'Last Matchday'}</span><div class="mtitle">${esc(show.title||show.place||'매치데이')}</div><div class="mmeta">${show.time?esc(show.time)+' · ':''}참가 ${attOf(show).length}명 · 경기 ${fin}/${ms.length}</div></div>${isT?'<span class="st today">TODAY</span>':next?`<span class="st up">D-${Math.round((pd(show.date)-pd(TODAY))/864e5)}</span>`:'<span class="st fin">FINAL</span>'}</button>`;
   }
   const rows=seasonRows('all').filter(r=>r.p>0);
-  h+=`<div class="between" style="padding:4px 4px 0"><span class="h1" style="font-size:16px">실시간 랭킹 <span class="cnt-chip">${rows.length}명</span></span><button class="mini blue" data-act="copy-season">${IC.copy}카톡 복사</button></div>`;
+  h+=`<div class="between" style="padding:4px 4px 0"><span class="h1" style="font-size:16px">실시간 랭킹 <span class="cnt-chip">${rows.length}명</span></span><button class="mini" data-nav="season">전체 보기</button></div>`;
   h+=rows.length?`<div class="hlist">${rows.slice(0,5).map((r,i)=>{const ld=lastDelta(r.id);return `<button class="lr" data-member="${r.id}"><span class="lr-n ${i<3?'r'+(i+1):''}">${i===0?IC.crown:i+1}</span>
       <span class="lr-t"><b>${esc(dn(r.id))}</b><small>${r.p}전 ${recK(r)} · 승률 ${pct(r)}</small></span><span class="lr-p"><b class="tab-n">${pOf(r.id)}P</b><small class="${ld>0?'pos':ld<0?'neg':''}">${ld>0?'▲ +'+ld:ld<0?'▼ '+ld:'–'}</small></span></button>`}).join('')}</div>
       ${rows.length>5?`<button class="link-back" data-nav="season" style="justify-self:center">전체 순위 보기 (${rows.length}명)</button>`:''}`
