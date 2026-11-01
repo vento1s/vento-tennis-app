@@ -463,6 +463,9 @@ main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
 .lobby-h h2{margin:0;font-size:24px;font-weight:900;color:var(--ink)}
 .lobby-h h2 span{font-size:14px;color:var(--muted);font-weight:700;margin-left:4px}
 body::before{background:var(--bg)!important}
+.mh-date.today{background:var(--gold);color:var(--on-gold)}
+.mh-date.today span{color:var(--on-gold)}
+.mhero .club-t{align-self:center}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -985,8 +988,8 @@ function scoreCard(x){const list=meetMatches(x.meetId);return matchCard(x,{no:li
 function meetHero(m){
   const d=pd(m.date),ms=meetMatches(m.id),fin=ms.filter(done).length,mvp=mvpOf(m),isT=m.date===TODAY;
   const tabs=[['matches','경기'],['ranking','순위'],['admin','관리']];
-  return `<div class="club mhero"><div class="club-top"><div class="mh-date"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
-      <div class="club-t"><span class="eyebrow" style="font-size:10px;letter-spacing:.22em">${isT?'Today · Matchday':m.date>TODAY?'Upcoming · Matchday':'Matchday'}</span><b>${esc(m.title||m.place||'매치데이')}</b>
+  return `<div class="club mhero"><div class="club-top"><div class="mh-date ${isT?'today':''}"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
+      <div class="club-t"><b>${esc(m.title||m.place||'매치데이')}</b>
         <span class="mh-meta">${m.time?`<i>${IC.n_hist}${esc(m.time)}</i>`:''}${m.title&&m.place?`<i>${IC.pin}${esc(m.place)}</i>`:''}${m.surface||m.env?`<i>${[m.env,m.surface].filter(Boolean).map(esc).join(' · ')}</i>`:''}${!m.time&&!m.place&&!m.surface&&!m.env?esc(fmtK(m.date)):''}</span></div>
       <button class="hedit" data-act="meet-info" aria-label="매치데이 정보 수정">${IC.edit}</button></div>
     <div class="kpis"><button data-act="edit-att"><span>참가</span><b>${attOf(m).length}<small>명</small></b></button><button data-mtab="matches"><span>경기</span><b>${fin}<small>/${ms.length}</small></b></button><button data-mtab="ranking"><span>MVP</span><b class="${mvp?'mvpb':''}">${mvp?esc(dn(mvp)):'–'}</b></button></div>
@@ -1105,7 +1108,7 @@ function viewHome(){
   const next=sm.find(m=>m.date>=TODAY);const last=sm.filter(m=>m.date<TODAY).slice(-1)[0];const show=next||last;
   if(show){const d=pd(show.date),ms=meetMatches(show.id),fin=ms.filter(done).length,isT=show.date===TODAY;
     h+=`<button class="mcard nextm" data-meet="${show.id}"><div class="mdate"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
-      <div class="mid"><span class="eyebrow" style="font-size:10px;letter-spacing:.2em">${isT?'Today':next?'Next Matchday':'Last Matchday'}</span><div class="mtitle">${esc(show.title||show.place||'매치데이')}</div><div class="mmeta">${show.time?esc(show.time)+' · ':''}참가 ${attOf(show).length}명 · 경기 ${fin}/${ms.length}</div></div>${isT?'<span class="st today">TODAY</span>':next?`<span class="st up">D-${Math.round((pd(show.date)-pd(TODAY))/864e5)}</span>`:'<span class="st fin">FINAL</span>'}</button>`;
+      <div class="mid"><div class="mtitle">${esc(show.title||show.place||'매치데이')}</div><div class="mmeta">${show.time?esc(show.time)+' · ':''}참가 ${attOf(show).length}명 · 경기 ${fin}/${ms.length}</div></div>${isT?'<span class="st today">TODAY</span>':next?`<span class="st up">D-${Math.round((pd(show.date)-pd(TODAY))/864e5)}</span>`:'<span class="st fin">FINAL</span>'}</button>`;
   }
   const rows=seasonRows('all').filter(r=>r.p>0);
   h+=`<div class="between" style="padding:4px 4px 0"><span class="h1" style="font-size:16px">실시간 랭킹 <span class="cnt-chip">${rows.length}명</span></span><button class="mini" data-nav="season">전체 보기</button></div>`;
