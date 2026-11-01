@@ -450,6 +450,17 @@ main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
 .pcard.ed{border-color:rgba(10,143,216,.35);border-style:dashed}
 .ssel{appearance:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-family:var(--f-sport);font-style:italic;font-weight:900;font-size:12.5px;color:var(--ink-2)}
 .bnav button span{white-space:nowrap}
+.top.lobby{border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,#00264A,#001D3A)}
+.top.lobby .top-in{padding-block:14px 13px}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.bmark{width:38px;height:38px;border-radius:11px;background:#0B3B6B;border:1px solid rgba(255,255,255,.1);display:grid;place-items:center;flex:none}
+.bmark svg{width:26px;height:26px}
+.btxt{display:grid;gap:1px;min-width:0}
+.btxt b{font-family:var(--f-sport);font-weight:900;font-size:19px;letter-spacing:-.01em;color:var(--ink);line-height:1.1}
+.btxt small{font-size:11.5px;color:var(--ink-2);opacity:.6;letter-spacing:.04em}
+.lobby-h{display:flex;align-items:baseline;gap:8px;padding:6px 4px 2px}
+.lobby-h h2{margin:0;font-size:20px;font-weight:900;color:var(--ink)}
+.lobby-h span{font-size:13px;color:var(--muted);font-weight:700}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -882,11 +893,13 @@ function renderHead(){
   const cname=S.view==='clubs'?'내 클럽':clubInfo(S.clubId).name;
   const logo=`<div class="logo"><div class="logo-r"><span class="ssm">SSM</span><span class="ttl">${esc(cname)}</span></div><div class="sub">CHAMPIONSHIP MANAGER <span class="ver">v1.1</span>${S.view!=='clubs'&&cfg().pin&&isAdmin()?'<span class="admtag">ADMIN</span>':''}</div></div>`;
   let h='';
-  if(S.view==='clubs')h=logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
+  if(S.view==='clubs')h=`<div class="brand"><span class="bmark" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11.5" fill="#D8F24A"/><path d="M6.6 9.6c4.6 2.9 4.6 9.9 0 12.8M25.4 9.6c-4.6 2.9-4.6 9.9 0 12.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></span>
+    <span class="btxt"><b>Tennis Manager</b><small>클럽 · 매치 · 랭킹</small></span></div>`;
   else if(TOP.includes(S.view))h=`<button class="back" data-nav="clubs" aria-label="내 클럽 목록으로">${IC.back}</button>`+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`;
   else if(S.view==='meet'){const m=curMeet();h=(S.build?`<button class="back" data-act="b-back" aria-label="이전 단계">${IC.back}</button>`:`<button class="back" data-nav="feed" aria-label="이벤트 목록으로">${IC.back}</button>`)+logo+`<span class="crown" aria-hidden="true">${IC.crown}</span>`}
   else h=`<button class="back" data-go="${S.view==='new'&&S.editId?'meet':S.view==='quick'?(S.qmFrom||'home'):'feed'}" aria-label="뒤로">${IC.back}</button>`+logo;
   $('#head').innerHTML=h;
+  document.querySelector('.top').classList.toggle('lobby',S.view==='clubs');
   document.querySelector('.top').hidden=['home','season','roster','history','feed'].includes(S.view);
 }
 
@@ -1073,7 +1086,7 @@ function seedList(m){
 function viewClubs(){
   if(S.loading)return loadingView();
   const list=allClubs();
-  let h=`<span class="lbl" style="padding:2px 4px 0">가입한 클럽 ${list.length}</span><div class="clist">`;
+  let h=`<div class="lobby-h"><h2>내 클럽</h2><span>${list.length}개</span></div><div class="clist">`;
   list.forEach(c=>{
     const n=RAW.members.filter(x=>clubOf(x)===c.id).length,ms=RAW.matches.filter(x=>clubOf(x)===c.id&&done(x)).length,ad=adminOf(c.id),cur=c.id===S.clubId;
     h+=`<button class="ccard ${cur?'on':''}" data-club="${c.id}">${clubPic(c,'sm')}
