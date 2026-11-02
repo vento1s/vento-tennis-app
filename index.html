@@ -546,6 +546,19 @@ body::before{background:var(--bg)!important}
 .secl>span{display:inline-flex;align-items:center;gap:7px;font-size:15px;font-weight:900;color:var(--ink)}
 .secl>span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 3px rgba(10,143,216,.25)}
 .secl>span.tdy::before{background:var(--gold);box-shadow:0 0 0 3px rgba(255,212,0,.25)}
+.mhero2{gap:12px}
+.mh2-top{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start}
+.ev-date.sm{width:56px;padding:6px 0 7px;background:rgba(10,143,216,.18)}
+.ev-date.sm b{font-size:26px}
+.ev-date.tdy{background:var(--gold)} .ev-date.tdy *{color:var(--on-gold)!important;opacity:1}
+.mhero2 .ev-th b{font-size:18px;color:var(--ink)}
+.mhero2 .ev-th .hedit{width:30px;height:30px;flex:none}
+.mhero2 .ev-tags i{background:rgba(0,0,0,.22);border-color:rgba(255,255,255,.1)}
+.ev-tags i.lg{color:var(--gold);border-color:rgba(255,212,0,.35)}
+.mhero2 .kpis{border-top:1px solid rgba(255,255,255,.09);padding-top:9px}
+.mtabs2{background:var(--card)}
+.mtabs2 button[aria-pressed="true"]{background:var(--blue);color:var(--on-blue)}
+.secl>span em{font-style:normal;font-size:12px;font-weight:700;color:var(--muted);margin-left:2px}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -1081,14 +1094,17 @@ function matchCard(x,opt={}){
 function previewCard(x,removable){return matchCard(x,{score:false,rm:removable})}
 function scoreCard(x){const list=meetMatches(x.meetId);return matchCard(x,{no:list.findIndex(y=>y.id===x.id)+1,del:true})}
 function meetHero(m){
-  const d=pd(m.date),ms=meetMatches(m.id),fin=ms.filter(done).length,mvp=mvpOf(m),isT=m.date===TODAY;
+  const d=pd(m.date),ms=meetMatches(m.id),fin=ms.filter(done).length,mvp=mvpOf(m),isT=m.date===TODAY,past=m.date<TODAY;
+  const dd=Math.round((pd(m.date)-pd(TODAY))/864e5);
+  const st=isT?'<span class="st today">TODAY</span>':!past?`<span class="st up">D-${dd}</span>`:fin?'<span class="st fin">FINAL</span>':'';
   const tabs=[['matches','경기'],['ranking','순위'],['admin','관리']];
-  return `<div class="club mhero"><div class="club-top"><div class="mh-date ${isT?'today':''}"><b class="tab-n">${pad(d.getMonth()+1)}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
-      <div class="club-t"><b>${esc(m.title||m.place||'매치데이')}</b>
-        <span class="mh-meta">${m.time?`<i>${IC.n_hist}${esc(m.time)}</i>`:''}${m.title&&m.place?`<i>${IC.pin}${esc(m.place)}</i>`:''}${m.surface||m.env?`<i>${[m.env,m.surface].filter(Boolean).map(esc).join(' · ')}</i>`:''}${m.scoring==='league'?`<i class="lgtag">리그 승3·패1</i>`:''}${!m.time&&!m.place&&!m.surface&&!m.env?esc(fmtK(m.date)):''}</span></div>
-      <button class="hedit" data-act="meet-info" aria-label="매치데이 정보 수정">${IC.edit}</button></div>
-    <div class="kpis"><button data-act="edit-att"><span>참가</span><b>${attOf(m).length}<small>명</small></b></button><button data-mtab="matches"><span>경기</span><b>${fin}<small>/${ms.length}</small></b></button><button data-mtab="ranking"><span>MVP</span><b class="${mvp?'mvpb':''}">${mvp?esc(dn(mvp)):'–'}</b></button></div>
-    <div class="seg mtabs">${tabs.map(([k,l])=>`<button data-mtab="${k}" aria-pressed="${S.meetTab===k}">${l}</button>`).join('')}</div></div>`;
+  const tags=[m.env,m.surface].filter(Boolean);
+  return `<div class="club home mhero2"><div class="mh2-top"><div class="ev-l"><div class="ev-date sm ${isT?'tdy':''}"><span>${MON[d.getMonth()]}</span><b class="tab-n">${pad(d.getDate())}</b><i>${DOW[d.getDay()]}</i></div>${st}</div>
+      <div class="ev-main"><div class="ev-th"><b>${esc(m.title||m.place||'매치데이')}</b><button class="hedit" data-act="meet-info" aria-label="매치데이 정보 수정">${IC.edit}</button></div>
+        <div class="ev-info">${m.time?`<span>${IC.n_hist}${esc(m.time)}</span>`:''}${m.place?`<span>${IC.pin}${esc(m.place)}</span>`:''}</div>
+        ${tags.length||m.scoring==='league'?`<div class="ev-tags">${tags.map(t=>`<i>${esc(t)}</i>`).join('')}${m.scoring==='league'?'<i class="lg">리그 승3·패1</i>':''}</div>`:''}</div></div>
+    <div class="kpis"><button data-act="edit-att"><span>참가</span><b>${attOf(m).length}<small>명</small></b></button><button data-mtab="matches"><span>경기</span><b>${fin}<small>/${ms.length}</small></b></button><button data-mtab="ranking"><span>MVP</span><b class="${mvp?'mvpb':''}">${mvp?esc(dn(mvp)):'–'}</b></button></div></div>
+    <div class="seg mtabs2">${tabs.map(([k,l])=>`<button data-mtab="${k}" aria-pressed="${S.meetTab===k}">${l}</button>`).join('')}</div>`;
 }
 function viewMeet(m){
   if(S.build)return viewBuilder(m);
@@ -1123,7 +1139,7 @@ function settingsCard(){
 
 function partCard(m){
   const att=attOf(m);
-  return `<div class="card"><div class="between"><span class="h1" style="font-size:18px">참가 선수 (${att.length}명)</span><button class="mini blue" data-act="edit-att">수정</button></div>
+  return `<div class="secl"><span>참가 선수 <em>${att.length}명</em></span><button class="mini" data-act="edit-att">수정</button></div><div class="card">
     ${att.length?`<div class="players">${members().filter(x=>att.includes(x.id)).map(x=>`<span class="pl on">${esc(dn(x.id))}</span>`).join('')}</div>`:`<p class="muted" style="margin:0">참가자가 없어요. 수정을 눌러 골라 주세요.</p>`}</div>`;
 }
 function viewBuilder(m){
