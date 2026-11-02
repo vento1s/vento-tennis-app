@@ -676,6 +676,12 @@ body::before{background:var(--bg)!important}
 .av.more:active{background:var(--blue);color:#fff}
 @keyframes avIn{from{opacity:0;transform:translateX(-14px) scale(.9)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){.avc{animation:none}}
+.ptitle{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:4px 4px 2px}
+.ptitle>div{display:grid;gap:2px;min-width:0}
+.ptitle h1{margin:0;font-size:24px;font-weight:900;color:var(--ink);letter-spacing:-.02em}
+.ptitle span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fabf.ext{width:auto;height:52px;padding:0 18px 0 14px;border-radius:999px;display:flex;align-items:center;gap:6px;font-weight:900;font-size:14.5px}
+.fabf.ext svg{width:22px;height:22px}
 .card.setc{padding:10px 12px;gap:8px}
 .setrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .setl{font-size:11.5px;font-weight:800;color:var(--muted);margin-bottom:-2px}
@@ -1309,14 +1315,15 @@ function evCard(m){
       ${open?'':`<span class="ev-n">${att.length?`<b>${att.length}</b>명`:'참가자 없음'}</span>`}
       <span class="ev-r">${mvp?`<span class="ev-mvp">${IC.crown}${esc(dn(mvp))}</span>`:''}${prog}</span></div></div>`;
 }
+const ptitle=(t,sub,right)=>`<header class="ptitle"><div><h1>${t}</h1>${sub?`<span>${sub}</span>`:''}</div>${right||''}</header>`;
 function viewFeed(){
   if(S.loading)return loadingView();
   const sm=seasonMeets();const past=sm.filter(m=>m.date<TODAY).length;
   const ys=new Set([now.getFullYear(),S.season]);S.meets.forEach(m=>m.date&&ys.add(+m.date.slice(0,4)));
   const n=Math.max(TARGET,sm.length);
   const up=sm.filter(m=>m.date>=TODAY),old=sm.filter(m=>m.date<TODAY).reverse();
-  let h=`<div class="between"><span class="lbl">매치데이 ${sm.length}</span><select id="season" class="ssel" aria-label="시즌">${[...ys].sort((a,b)=>b-a).map(y=>`<option value="${y}" ${y===S.season?'selected':''}>${y} 시즌</option>`).join('')}</select></div>`;
-  if(!sm.length)return h+`<div class="empty"><p class="big" style="font-size:19px">등록된 매치데이가 없어요</p><p class="hint">오른쪽 아래 + 버튼 → 새 매치데이로 만들어 보세요.</p></div>`;
+  let h=ptitle('이벤트',`${S.season} 시즌 매치데이 ${sm.length}개`,`<select id="season" class="ssel" aria-label="시즌">${[...ys].sort((a,b)=>b-a).map(y=>`<option value="${y}" ${y===S.season?'selected':''}>${y} 시즌</option>`).join('')}</select>`);
+  if(!sm.length)return h+`<div class="empty"><p class="big" style="font-size:19px">등록된 매치데이가 없어요</p><p class="hint">오른쪽 아래 매치데이 버튼으로 만들어 보세요.</p></div>`;
   if(up.length)h+=`<span class="lbl" style="padding:4px 4px 0">예정 ${up.length}</span><div class="feed">${up.map(evCard).join('')}</div>`;
   if(old.length)h+=`<span class="lbl" style="padding:6px 4px 0">지난 매치데이 ${old.length}</span><div class="feed">${old.map(evCard).join('')}</div>`;
   return h;
@@ -1587,7 +1594,7 @@ function viewPlayers(){
   else if(S.pSort==='recent')list=list.slice().sort((a,b)=>(last[b.id]||'').localeCompare(last[a.id]||''));
   else list=list.slice().sort((a,b)=>dn(a.id).localeCompare(dn(b.id),'ko'));
   const ed=S.pEdit&&isAdmin();
-  let h=`<div class="between"><span class="lbl">선수 ${S.members.length}명</span><button class="mini ${ed?'gold':'blue'}" data-act="p-edit">${ed?'편집 완료':IC.edit+'편집'}</button></div>
+  let h=ptitle('선수',`등록 ${S.members.length}명`,`<button class="mini ${ed?'gold':'blue'}" data-act="p-edit">${ed?'편집 완료':IC.edit+'편집'}</button>`)+`
     ${ed?`<div class="editbar">${IC.cam}<span>카드의 카메라를 눌러 사진을 바로 넣고, 카드를 누르면 정보를 고칠 수 있어요.</span></div>`:''}
     <div class="seg">${[['name','이름순'],['att','출석순'],['recent','최근 참가']].map(([k,l])=>`<button data-psort="${k}" aria-pressed="${S.pSort===k}">${l}</button>`).join('')}</div>`;
   if(!list.length)return h+`<div class="empty"><p class="big" style="font-size:19px">등록된 선수가 없어요</p><p class="hint">오른쪽 아래 + 버튼으로 선수를 추가해 보세요.</p></div>`;
@@ -1605,7 +1612,7 @@ function viewSeason(){
   const rows=seasonRows(S.rankType);
   const played=seasonMatches().filter(done).length;
   const nm=seasonMeets().filter(x=>meetMatches(x.id).some(done)).length;
-  let h=`<div class="scope"><b>${S.season} 시즌 랭킹</b><span>올해 매치데이 ${nm}회 · 경기 ${played}개 누적</span></div><div class="hof">
+  let h=ptitle('시즌 랭킹',`${S.season} 시즌 · 매치데이 ${nm}회 · 경기 ${played}개 누적`)+`<div class="hof">
     <div class="hof-b"><div class="seg">${[['S','단식'],['D','복식']].map(([k,l])=>`<button data-rank="${k}" aria-pressed="${S.rankType===k}">${l}</button>`).join('')}</div>
     <p class="hint" style="margin:0;text-align:center">승 3점 · 무 2점 · 패 1점</p>
     ${rows.some(r=>r.p>0)?rankRows(rows,null,true):`<p class="muted" style="text-align:center;padding:20px;margin:0">아직 ${S.rankType==='D'?'복식':'단식'} 경기 기록이 없어요.</p>`}</div></div>`;
@@ -1629,7 +1636,7 @@ function viewHistory(){
   if(S.loading)return loadingView();
   const t=S.histType;
   const ms=seasonMatches().filter(done).filter(x=>t==='all'||x.type===t);
-  let h=`<div class="between"><span></span><span class="lbl">${S.season} · ${ms.length}경기</span></div>
+  let h=ptitle('경기 기록',`${S.season} 시즌 · ${ms.length}경기`)+`
     <div class="seg">${[['all','전체'],['D','복식'],['S','단식']].map(([k,l])=>`<button data-hist="${k}" aria-pressed="${t===k}">${l}</button>`).join('')}</div>`;
   const sm=seasonMeets(),pastN=sm.filter(m=>m.date<TODAY).length;
   const open=sm.filter(m=>!meetMatches(m.id).some(done)).sort((a,b)=>a.date.localeCompare(b.date));
@@ -1651,6 +1658,7 @@ const scY=()=>{const e=scEl();return e?e.scrollTop:window.scrollY};
 const scBy=dy=>{const e=scEl();if(e)e.scrollBy(0,dy);else window.scrollBy(0,dy)};
 const vpBox=()=>{const e=scEl();if(!e)return {top:0,h:window.innerHeight};const r=e.getBoundingClientRect();return {top:r.top,h:r.height}};
 const TOP=['clubs','home','feed','season','history','roster'];
+const FABL={home:['추가하기',''],feed:['매치데이 추가','매치데이'],roster:['선수 추가','선수'],meet:['경기 기록','경기 기록']};
 function render(){
   ELO=computeElo();PTC=null;
   if(drag){pending=true;return}
@@ -1676,8 +1684,6 @@ function render(){
     else if(S.view==='new')bb=`<button class="upbar" data-go="${S.editId?'meet':'feed'}">${IC.back}<span>${S.editId?'매치데이':'이벤트'}</span></button>`;
     else if(S.view==='quick')bb=`<button class="upbar" data-go="${S.qmFrom||'home'}">${IC.back}<span>뒤로</span></button>`;
     html=bb+html;
-  }else if(!S.loading&&S.view!=='clubs'&&S.view!=='home'&&(S.back||[]).length){
-    html=`<button class="upbar" data-act="nav-back">${IC.back}<span>${esc(backLabel(S.back[S.back.length-1]))}</span></button>`+html;
   }
   $('#view').innerHTML=html;
   let bar='';const b=S.build;
@@ -1693,7 +1699,7 @@ function render(){
   if(!bar){
     const items=((TOP.includes(S.view)&&S.view!=='clubs')||(S.view==='meet'&&!b))?[['home','CLUB',IC.n_club,S.view==='home'],['feed','EVENTS',IC.n_feed,S.view==='feed'||S.view==='meet'],['roster','PLAYERS',IC.n_roster,S.view==='roster'],['season','SEASON',IC.n_rank,S.view==='season'],['history','HISTORY',IC.n_hist,S.view==='history']]:[];
     if(items.length)nav=`<nav class="bnav" aria-label="메뉴"><div class="bnav-in" style="grid-template-columns:repeat(${items.length},1fr)">${items.map(([v,l,ic,on])=>`<button data-nav="${v}" ${on?'aria-current="page"':''}>${ic}<span>${l}</span></button>`).join('')}</div></nav>
-      <button class="fabf" data-act="fab" aria-label="${S.view==='clubs'?'새 클럽 만들기':'추가하기'}">${IC.plus}</button>`;
+      ${FABL[S.view]?`<button class="fabf ${FABL[S.view][1]?'ext':''}" data-act="fab" aria-label="${FABL[S.view][0]}">${IC.plus}${FABL[S.view][1]?`<span>${FABL[S.view][1]}</span>`:''}</button>`:''}`;
   }
   $('#bar').innerHTML=bar?`<div class="gobar">${bar}</div>`:nav;
 }
@@ -2102,7 +2108,7 @@ document.addEventListener('click',e=>{
     case 'close':closeModal();break;
     case 'admin-panel':adminPanel();break;
     case 'p-edit':if(S.pEdit){S.pEdit=false;render()}else if(isAdmin()){S.pEdit=true;render()}else adminLogin(()=>{S.pEdit=true;render()});break;
-    case 'fab':if(S.view==='clubs')clubModal(true);else fabModal();break;
+    case 'fab':if(S.view==='clubs')clubModal(true);else if(S.view==='roster')memberModal(null);else if(S.view==='feed'){const x=document.createElement('button');x.dataset.act='new';x.hidden=true;document.body.appendChild(x);x.click();x.remove()}else fabModal();break;
     case 'club-edit':clubModal(false);break;
     case 'club-new':clubModal(true);break;
     case 'qm-save':qmSave();break;
