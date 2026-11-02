@@ -585,6 +585,8 @@ body::before{background:var(--bg)!important}
 .rk-m svg{width:36px;height:42px}
 .rk .rk-m{width:38px}
 .seed .rec .wl{font-size:12px!important;gap:3px;vertical-align:0}
+.seg.hseg{padding:3px;border-radius:999px;background:var(--card)}
+.seg.hseg button{padding:5px 13px;font-size:12.5px;border-radius:999px}
 .card.setc{padding:10px 12px;gap:8px}
 .setrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sc2{display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--field);border-radius:12px;padding:4px 4px 4px 12px}
@@ -721,7 +723,7 @@ const now=new Date();
 const TODAY=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
 const TARGET=6;
 const BASE_VENUES=['스포원','송정테니스파크'];
-const S={members:[],meets:[],matches:[],config:[],clubs:[],clubId:(()=>{try{return localStorage.getItem('ssm-club')||'default'}catch(e){return 'default'}})(),histType:'all',pSort:'name',view:'clubs',qm:null,meetId:null,meetTab:'matches',season:now.getFullYear(),loading:true,local:false,rankType:'all',
+const S={members:[],meets:[],matches:[],config:[],clubs:[],clubId:(()=>{try{return localStorage.getItem('ssm-club')||'default'}catch(e){return 'default'}})(),histType:'all',pSort:'name',view:'clubs',qm:null,meetId:null,meetTab:'matches',season:now.getFullYear(),loading:true,local:false,rankType:'S',
   gen:{type:'D',courts:2,rounds:3},build:null,draft:null,editId:null,man:{type:'D',court:1,a:[null,null],b:[null,null]}};
 let DB=null,pending=false,drag=null;
 const LS='ssm-tennis-v1';
@@ -831,8 +833,8 @@ function tally(matches,ids,type,meets){
 }
 const seasonStats=type=>tally(seasonMatches(),members().map(m=>m.id),type,seasonMeets());
 function seasonRows(type){
-  const rows=seasonStats(type);if(type!=='all')return rows;
-  return rows.sort((a,b)=>((b.p>0)-(a.p>0))||(pOf(b.id)-pOf(a.id))||rate(b)-rate(a)||b.w-a.w);
+  const rows=seasonStats(type);
+  return rows.sort((a,b)=>((b.p>0)-(a.p>0))||(lgPts(b)-lgPts(a))||((b.gf-b.ga)-(a.gf-a.ga))||rate(b)-rate(a)||dn(a.id).localeCompare(dn(b.id),'ko'));
 }
 
 function mvpOf(meet){const ms=meetMatches(meet.id).filter(done);if(!ms.length)return null;const r=tally(ms,meet.attendees||[],'all')[0];return r&&r.w?r.id:null}
@@ -923,7 +925,7 @@ function seasonText(){
   const rows=seasonRows('all').filter(r=>r.p>0);
   const lines=[`🎾 ${clubInfo(S.clubId).name} ${S.season} 시즌 순위`,`(${fmtK(TODAY)} 기준)`,''];
   if(!rows.length)lines.push('아직 기록된 경기가 없어요.');
-  rows.forEach((r,i)=>lines.push(`${i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.'} ${dn(r.id)} ${pOf(r.id)}P · ${recK(r)} (${pct(r)})`));
+  rows.forEach((r,i)=>lines.push(`${i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.'} ${dn(r.id)} ${lgPts(r)}점 · ${recK(r)} (${pct(r)})`));
   return lines.join('\n');
 }
 function meetText(m){
@@ -1282,12 +1284,12 @@ function viewHome(){
     <div class="kpis"><button data-nav="roster"><span>등록 선수</span><b>${ids.length}<small>명</small></b></button><button data-nav="history"><span>${S.season} 경기</span><b>${played}<small>경기</small></b></button><button data-nav="season"><span>평균 P</span><b>${avg}<small>P</small></b></button></div></div>`;
   const next=sm.find(m=>m.date>=TODAY);const last=sm.filter(m=>m.date<TODAY).slice(-1)[0];const show=next||last;
   if(show)h+=`<div class="secl"><span class="${show.date===TODAY?'tdy':''}">${show.date===TODAY?'오늘의 매치데이':next?'다가오는 매치데이':'최근 매치데이'}</span>${next&&show.date!==TODAY?`<button class="mini" data-nav="feed">전체 보기</button>`:''}</div>`+evCard(show);
-  const rows=seasonRows('all').filter(r=>r.p>0);
-  h+=`<div class="between" style="padding:4px 4px 0"><span class="h1" style="font-size:16px">실시간 랭킹 <span class="cnt-chip">${rows.length}명</span></span><button class="mini" data-nav="season">전체 보기</button></div>`;
-  h+=rows.length?`<div class="hlist">${rows.slice(0,5).map((r,i)=>{const ld=lastDelta(r.id);return `<button class="lr" data-member="${r.id}">${i<3?medal(i+1,'lr-m'):`<span class="lr-n">${i+1}</span>`}
-      <span class="lr-t"><b>${esc(dn(r.id))}</b><small>${r.p}전 ${recK(r)} · 승률 ${pct(r)}</small></span><span class="lr-p"><b class="tab-n">${pOf(r.id)}P</b><small class="${ld>0?'pos':ld<0?'neg':''}">${ld>0?'▲ +'+ld:ld<0?'▼ '+ld:'–'}</small></span></button>`}).join('')}</div>
-      ${rows.length>5?`<button class="link-back" data-nav="season" style="justify-self:center">전체 순위 보기 (${rows.length}명)</button>`:''}`
-    :`<div class="empty"><p class="hint">점수가 입력되면 랭킹이 나와요. 오른쪽 아래 + 버튼으로 경기를 바로 기록할 수 있어요.</p></div>`;
+  const rt=S.rankType==='D'?'D':'S';const rows=seasonRows(rt).filter(r=>r.p>0);
+  h+=`<div class="between" style="padding:4px 4px 0"><span class="h1" style="font-size:16px">실시간 랭킹 <span class="cnt-chip">${rows.length}명</span></span><div class="seg hseg">${[['S','단식'],['D','복식']].map(([k,l])=>`<button data-rank="${k}" aria-pressed="${rt===k}">${l}</button>`).join('')}</div></div>`;
+  h+=rows.length?`<div class="hlist">${rows.slice(0,5).map((r,i)=>{const gd=r.gf-r.ga;return `<button class="lr" data-member="${r.id}">${i<3?medal(i+1,'lr-m'):`<span class="lr-n">${i+1}</span>`}
+      <span class="lr-t"><b>${esc(dn(r.id))}</b><small>${r.p}전 ${recK(r)} · 승률 ${pct(r)}</small></span><span class="lr-p"><b class="tab-n">${lgPts(r)}점</b><small class="${gd>0?'pos':gd<0?'neg':''}">득실 ${gd>0?'+':''}${gd}</small></span></button>`}).join('')}</div>
+      <button class="link-back" data-nav="season" style="justify-self:center">${rt==='D'?'복식':'단식'} 전체 순위 보기 (${rows.length}명)</button>`
+    :`<div class="empty"><p class="hint">아직 ${rt==='D'?'복식':'단식'} 경기 기록이 없어요. 점수가 입력되면 랭킹이 나와요.</p></div>`;
   return h;
 }
 function qmReady(){const q=S.qm;if(!q)return false;const n=q.type==='D'?2:1;return q.a.slice(0,n).every(Boolean)&&q.b.slice(0,n).every(Boolean)&&q.sa!=null&&q.sb!=null}
@@ -1333,8 +1335,9 @@ function viewSeason(){
   const rows=seasonRows(S.rankType);
   const played=seasonMatches().filter(done).length;
   let h=`<div class="hof">
-    <div class="hof-b"><div class="seg">${[['all','전체'],['D','복식'],['S','단식']].map(([k,l])=>`<button data-rank="${k}" aria-pressed="${S.rankType===k}">${l}</button>`).join('')}</div>
-    ${rows.length?rankRows(rows):''}</div></div>`;
+    <div class="hof-b"><div class="seg">${[['S','단식'],['D','복식']].map(([k,l])=>`<button data-rank="${k}" aria-pressed="${S.rankType===k}">${l}</button>`).join('')}</div>
+    <p class="hint" style="margin:0;text-align:center">승 3점 · 무 2점 · 패 1점</p>
+    ${rows.some(r=>r.p>0)?rankRows(rows,null,true):`<p class="muted" style="text-align:center;padding:20px;margin:0">아직 ${S.rankType==='D'?'복식':'단식'} 경기 기록이 없어요.</p>`}</div></div>`;
   return h;
 }
 function viewRoster(){
@@ -1933,4 +1936,3 @@ async function init(){
 init();
 })();
 </script>
-</body></html>
