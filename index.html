@@ -157,7 +157,7 @@ main{max-width:640px;margin:0 auto;padding-block:14px calc(100px + env(safe-area
 
 .seg{display:flex;background:var(--field);border-radius:var(--r-field);padding:6px;gap:4px}
 .seg button{flex:1 1 0;min-width:0;border-radius:15px;padding:10px 2px;font-weight:900;font-style:italic;color:var(--muted);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--blue);color:#fff;box-shadow:0 4px 12px rgba(15,76,134,.45)}
 
 .chips-h{display:flex;gap:6px}
 .mini{font-family:var(--f-sport);font-weight:900;font-style:italic;font-size:12px;padding:5px 11px;border-radius:999px;background:var(--field);color:var(--ink-2)}
@@ -664,12 +664,22 @@ body::before{background:var(--bg)!important}
 .seasonlink small{font-size:11px;color:var(--muted);font-style:normal;font-weight:700}
 .card.setc{padding:10px 12px;gap:8px}
 .setrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.sc2{display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--field);border-radius:12px;padding:4px 4px 4px 12px}
-.sc2>span{font-size:12.5px;font-weight:800;color:var(--ink-2);white-space:nowrap}
-.stp2{display:flex;align-items:center}
-.stp2 button{width:30px;height:30px;border-radius:9px;color:var(--ink-2);font-size:18px}
-.stp2 button:active{background:var(--field-2)}
-.stp2 output{min-width:22px;text-align:center;font-family:var(--f-sport);font-style:italic;font-weight:900;font-size:17px}
+.setl{font-size:11.5px;font-weight:800;color:var(--muted);margin-bottom:-2px}
+.sc2{display:grid;gap:6px;background:var(--field);border-radius:14px;padding:9px 10px 10px}
+.sc2-l{font-size:11.5px;font-weight:800;color:var(--muted)}
+.stp2{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.stp2 button{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--blue-t);color:var(--blue-t);font-size:20px;font-weight:700;display:grid;place-items:center;line-height:1}
+.stp2 button:active{background:var(--blue);color:#fff}
+.stp2 button:disabled{border-color:var(--line);color:var(--dim);cursor:default;background:none}
+.stp2 output{display:flex;align-items:baseline;gap:2px;font-size:12px;font-weight:800;color:var(--ink-2)}
+.stp2 output b{font-family:var(--f-sport);font-style:italic;font-weight:900;font-size:24px;color:var(--ink)}
+.setsum{display:flex;gap:8px;align-items:flex-start;margin:0;background:rgba(74,136,207,.1);border:1px solid rgba(74,136,207,.28);border-radius:12px;padding:9px 11px;font-size:13px;color:var(--ink-2)}
+.setsum svg{width:14px;height:14px;color:var(--blue-t);flex:none;margin-top:3px}
+.setsum span{display:grid;gap:2px}
+.setsum b{color:var(--ink)} .setsum b.hi{color:var(--gold);font-size:15px}
+.setsum em{font-style:normal}
+.setsum small{font-size:11.5px;color:var(--muted)}
+.setsum.warn{background:rgba(255,212,0,.08);border-color:rgba(255,212,0,.3);color:var(--gold)}
 .seed{padding:3px 4px 3px 12px!important}
 .seed .grip{height:36px}
 .seeds{gap:5px!important}
@@ -1408,10 +1418,13 @@ function viewMeet(m){
 }
 
 function settingsCard(){
-  const g=S.gen;
-  const st=(k,v,l)=>`<div class="sc2"><span>${l}</span><div class="stp2"><button data-step="${k}" data-d="-1" aria-label="${l} 줄이기">−</button><output>${v}</output><button data-step="${k}" data-d="1" aria-label="${l} 늘리기">+</button></div></div>`;
-  return `<div class="card setc"><div class="seg sm">${['D','S'].map(t=>`<button data-gtype="${t}" aria-pressed="${g.type===t}">${t==='D'?'복식':'단식'}</button>`).join('')}</div>
-    <div class="setrow">${st('courts',g.courts,'코트')}${st('rounds',g.rounds,'라운드')}</div></div>`;
+  const g=S.gen;const m=curMeet();const n=m?attOf(m).length:0;
+  const per=g.type==='D'?4:2,slots=Math.min(g.courts,Math.floor(n/per)),games=slots*g.rounds,play=slots*per,rest=Math.max(0,n-play);
+  const st=(k,v,l,u,lim)=>`<div class="sc2"><span class="sc2-l">${l}</span><div class="stp2"><button data-step="${k}" data-d="-1" aria-label="${l} 줄이기" ${v<=lim[0]?'disabled':''}>−</button><output><b>${v}</b>${u}</output><button data-step="${k}" data-d="1" aria-label="${l} 늘리기" ${v>=lim[1]?'disabled':''}>+</button></div></div>`;
+  const sum=!n?'':slots<1?`<p class="setsum warn">${g.type==='D'?'복식은 4명':'단식은 2명'} 이상 있어야 경기를 만들 수 있어요. 지금 ${n}명이에요.</p>`
+    :`<p class="setsum">${IC.next}<span><em>${g.type==='D'?'복식':'단식'} <b>${slots}경기</b>씩 × <b>${g.rounds}라운드</b> = 총 <b class="hi">${games}경기</b></em><small>매 라운드 ${play}명 출전${rest?` · ${rest}명 휴식`:''}${slots<g.courts?` · 인원이 부족해 코트 ${slots}면만 써요`:''}</small></span></p>`;
+  return `<div class="card setc"><span class="setl">경기 종류</span><div class="seg">${['D','S'].map(t=>`<button data-gtype="${t}" aria-pressed="${g.type===t}">${t==='D'?'복식 2:2':'단식 1:1'}</button>`).join('')}</div>
+    <div class="setrow">${st('courts',g.courts,'코트 수','면',[1,6])}${st('rounds',g.rounds,'라운드','회',[1,10])}</div>${sum}</div>`;
 }
 
 function partCard(m){
