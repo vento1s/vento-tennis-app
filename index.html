@@ -584,6 +584,7 @@ body::before{background:var(--bg)!important}
 .lr .lr-m{width:30px}
 .rk-m svg{width:36px;height:42px}
 .rk .rk-m{width:38px}
+.seed .rec .wl{font-size:12px!important;gap:3px;vertical-align:0}
 .card.setc{padding:10px 12px;gap:8px}
 .setrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sc2{display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--field);border-radius:12px;padding:4px 4px 4px 12px}
@@ -1254,7 +1255,7 @@ function seedList(m){
   if(o.length<2)return `<p class="hint">참가자를 2명 이상 선택하면 시드를 정할 수 있어요.</p>`;
   const st=Object.fromEntries(seasonStats('all').map(r=>[r.id,r]));
   return `<div class="field"><div class="between"><span class="lbl">Seeds</span><button class="mini" data-act="seed-reset">처음 순서로</button></div>
-    <div class="seeds">${o.map((id,i)=>{const r=st[id];return `<div class="seed" data-sid="${id}"><span class="no">${i+1}</span><span class="nm">${esc(dn(id))}</span><span class="rec">${pOf(id)}P${r&&r.p?` · ${r.w}W ${r.l}L`:''}</span><button class="grip" data-grip="${id}" aria-label="${esc(dn(id))} 드래그해서 시드 바꾸기 (키보드: 위·아래 화살표)">${IC.grip}</button></div>`}).join('')}</div>
+    <div class="seeds">${o.map((id,i)=>{const r=st[id];return `<div class="seed" data-sid="${id}"><span class="no">${i+1}</span><span class="nm">${esc(dn(id))}</span><span class="rec">${pOf(id)}P${r&&r.p?` · <b class="wl"><em class="w">${r.w}승</em>${r.d?`<em class="d">${r.d}무</em>`:''}<em class="l">${r.l}패</em></b>`:''}</span><button class="grip" data-grip="${id}" aria-label="${esc(dn(id))} 드래그해서 시드 바꾸기 (키보드: 위·아래 화살표)">${IC.grip}</button></div>`}).join('')}</div>
     <p class="hint">1번이 가장 강한 시드예요. 오른쪽 손잡이를 눌러 위아래로 끌면 순서가 바뀌고, 이 매치데이에 저장돼요.</p></div>`;
 }
 
