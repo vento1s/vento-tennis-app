@@ -1556,7 +1556,7 @@ function viewHome(){
   if(show)h+=`<div class="secl"><span class="${show.date===TODAY?'tdy':''}">${show.date===TODAY?'오늘의 매치데이':next?'다가오는 매치데이':'최근 매치데이'}</span>${next&&show.date!==TODAY?`<button class="mini" data-nav="feed">전체 보기</button>`:''}</div>`+evCard(show);
   const rt=S.rankType==='D'?'D':'S';const rows=seasonRows(rt).filter(r=>r.p>0);
   h+=`<div class="between" style="padding:4px 4px 0"><span class="h1" style="font-size:16px">${S.season} 시즌 랭킹 <span class="cnt-chip">${rows.length}명</span></span><div class="seg hseg">${[['S','단식'],['D','복식']].map(([k,l])=>`<button data-rank="${k}" aria-pressed="${rt===k}">${l}</button>`).join('')}</div></div>`;
-  h+=rows.length?`<div class="hlist">${rows.slice(0,5).map((r,i)=>{const gd=r.gf-r.ga;return `<button class="lr" data-member="${r.id}">${i<3?medal(i+1,'lr-m'):`<span class="lr-n">${i+1}</span>`}
+  h+=rows.length?`<div class="hlist">${rows.slice(0,5).map((r,i)=>{const gd=r.gf-r.ga;return `<button class="lr" data-member="${r.id}"><span class="lr-n">${i+1}</span>
       <span class="lr-t"><b>${esc(dn(r.id))}</b><small>${r.p}전 ${recK(r)} · 승률 ${pct(r)}</small></span><span class="lr-p"><b class="tab-n">${lgPts(r)}점</b><small class="${gd>0?'pos':gd<0?'neg':''}">득실 ${gd>0?'+':''}${gd}</small></span></button>`}).join('')}</div>
       <button class="link-back" data-nav="season" style="justify-self:center">${rt==='D'?'복식':'단식'} 전체 순위 보기 (${rows.length}명)</button>`
     :`<div class="empty"><p class="hint">아직 ${rt==='D'?'복식':'단식'} 경기 기록이 없어요. 점수가 입력되면 랭킹이 나와요.</p></div>`;
