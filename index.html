@@ -1688,7 +1688,7 @@ function memberModal(id,openEdit){
     stat=`<div class="prof"><div><span class="eyebrow">${rk>=0?`${S.season} ${tn} ${rk+1}위`:`${S.season} ${tn}`}</span><div class="pbig tab-n">${lgPts(tr)}<small>점</small></div><span class="pch ${gd>0?'pos':gd<0?'neg':''}">${tr.p}전 ${recK(tr)} · 득실 ${gd>0?'+':''}${gd}</span>${pTags(m).length?`<span class="pc-tags" style="justify-content:flex-start;margin-top:6px">${pTags(m).map(x=>`<i>${esc(x)}</i>`).join('')}</span>`:''}</div>
       ${recent.length?`<div class="form"><span class="lbl">최근</span><div>${recent.map(r=>`<i class="${r}">${KR[r]}</i>`).join('')}</div></div>`:''}</div>
       ${sparkline(ph,{base:null,up:true,label:`${tn} 누적 점수`,empty:'경기 기록이 쌓이면 누적 점수 그래프가 그려져요.'})}
-      <div class="stats4"><div class="stat"><b>${a.att}</b><em>회</em><span>출석</span></div>${box(s,'단식')}${box(d,'복식')}<div class="stat"><b>${pct(a)}</b><em>${a.p}전</em><span>승률</span></div></div>
+      <div class="stats4" style="grid-template-columns:repeat(${2+(s.p>0||!d.p?1:0)+(d.p>0?1:0)},1fr)"><div class="stat"><b>${a.att}</b><em>회</em><span>출석</span></div>${s.p>0||!d.p?box(s,'단식'):''}${d.p>0?box(d,'복식'):''}<div class="stat"><b>${pct(a)}</b><em>${a.p}전</em><span>승률</span></div></div>
       <p class="hint">${tn} 누적 점수 그래프 · 승 3점 · 무 2점 · 패 1점 · 실력 ${pOf(id)}P${best?` · 최고의 파트너 <b style="color:var(--gold)">${esc(dn(best[0]))}</b> (${best[1].w}승 ${best[1].p-best[1].w}패)`:''}</p>`;
     if(mine.length){
       const h2h={};
