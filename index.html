@@ -860,6 +860,12 @@ const IC={
   trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.6 4M17 6h2.5a2.5 2.5 0 0 1-2.6 4M12 14v3M8 21l1.5-4h5L16 21"/></svg>'
 };
 
+/* ---------- back stack ---------- */
+const BACKN={home:'클럽',feed:'이벤트',roster:'선수',season:'시즌 랭킹',history:'기록'};
+function backLabel(x){if(!x)return '뒤로';if(x.view==='meet'){const mt=S.meets.find(y=>y.id===x.meetId);const t=mt?(mt.title||mt.place||'매치데이'):'매치데이';return t.length>12?t.slice(0,12)+'…':t}return BACKN[x.view]||'뒤로'}
+function pushBack(){S.back=S.back||[];const cur={view:S.view,meetId:S.meetId,meetTab:S.meetTab};const top=S.back[S.back.length-1];if(top&&top.view===cur.view&&top.meetId===cur.meetId)return;S.back.push(cur);if(S.back.length>20)S.back.shift();if(!window.claude){try{history.pushState({ssm:1},'')}catch(e){}}}
+function goBack(fromPop){const x=(S.back||[]).pop();if(!x)return false;S.view=x.view;S.meetId=x.view==='meet'?x.meetId:null;S.meetTab=x.meetTab||'matches';S.build=null;S.editId=null;S.draft=null;render();toTop();if(!fromPop&&!window.claude){S._skipPop=true;try{history.back()}catch(e){S._skipPop=false}}return true}
+window.addEventListener('popstate',()=>{if(S._skipPop){S._skipPop=false;return}if((S.back||[]).length)goBack(true)});
 function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2600)}
 const SCOPED=['members','meets','matches'];
 const RAW={members:[],meets:[],matches:[]};
@@ -966,7 +972,7 @@ const clubInfo=id=>id==='default'?{...DEFAULT_CLUB,...(S.config.find(x=>x.id==='
 const cfg=()=>S.clubId==='default'?(S.config.find(x=>x.id==='club')||{}):(S.clubs.find(x=>x.id===S.clubId)||{});
 function putCfg(obj){if(S.clubId==='default')put('config',{...obj,id:'club'});else put('clubs',{...obj,id:S.clubId})}
 const allClubs=()=>[clubInfo('default'),...S.clubs.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).map(c=>clubInfo(c.id))];
-function selectClub(id){S.clubId=id;try{localStorage.setItem('ssm-club',id)}catch(e){}applyClub();S.view='home';S.meetId=null;S.build=null;S.qm=null;render();toTop()}
+function selectClub(id){S.back=[];S.clubId=id;try{localStorage.setItem('ssm-club',id)}catch(e){}applyClub();S.view='home';S.meetId=null;S.build=null;S.qm=null;render();toTop()}
 const admKey=id=>id==='default'?'ssm-admin':'ssm-admin:'+id;
 function keyFor(id){try{return localStorage.getItem(admKey(id))||''}catch(e){return (S._adm||{})[id]||''}}
 function myKey(){return keyFor(S.clubId)}
@@ -1636,10 +1642,12 @@ function render(){
   if(S.local&&!S.loading)html+=`<p class="note">이 화면에서는 기록이 이 기기에만 저장돼요.</p>`;
   if(!TOP.includes(S.view)&&!S.loading){
     let bb='';
-    if(S.view==='meet')bb=S.build?`<button class="upbar" data-act="b-back">${IC.back}<span>이전 단계</span></button>`:`<button class="upbar" data-nav="feed">${IC.back}<span>이벤트</span></button>`;
+    if(S.view==='meet')bb=S.build?`<button class="upbar" data-act="b-back">${IC.back}<span>이전 단계</span></button>`:(S.back||[]).length?`<button class="upbar" data-act="nav-back">${IC.back}<span>${esc(backLabel(S.back[S.back.length-1]))}</span></button>`:`<button class="upbar" data-nav="feed">${IC.back}<span>이벤트</span></button>`;
     else if(S.view==='new')bb=`<button class="upbar" data-go="${S.editId?'meet':'feed'}">${IC.back}<span>${S.editId?'매치데이':'이벤트'}</span></button>`;
     else if(S.view==='quick')bb=`<button class="upbar" data-go="${S.qmFrom||'home'}">${IC.back}<span>뒤로</span></button>`;
     html=bb+html;
+  }else if(!S.loading&&S.view!=='clubs'&&S.view!=='home'&&(S.back||[]).length){
+    html=`<button class="upbar" data-act="nav-back">${IC.back}<span>${esc(backLabel(S.back[S.back.length-1]))}</span></button>`+html;
   }
   $('#view').innerHTML=html;
   let bar='';const b=S.build;
@@ -2040,10 +2048,10 @@ document.addEventListener('click',e=>{
   if(d.qn&&S.qm){S.qm['s'+d.qn[0]]=+d.qn.slice(1);render();return}
   if(d.hist){S.histType=d.hist;render();return}
   if(d.go){if(d.go==='meet'&&S.editId){S.view='meet';S.editId=null;S.draft=null}else{S.view=d.go;S.editId=null;S.draft=null;if(d.go==='feed'){S.meetId=null;S.build=null}}render();toTop();return}
-  if(d.meet){S.view='meet';S.meetId=d.meet;S.meetTab='matches';S.build=null;S.man={type:'D',court:1,a:[null,null],b:[null,null]};render();toTop();return}
+  if(d.meet){if(!(S.view==='meet'&&S.meetId===d.meet))pushBack();S.view='meet';S.meetId=d.meet;S.meetTab='matches';S.build=null;S.man={type:'D',court:1,a:[null,null],b:[null,null]};render();toTop();return}
   if(e.target.closest('[data-pcam]')){const id=e.target.closest('[data-pcam]').dataset.pcam;pickPhoto(id);return}
   if(d.member){memberModal(d.member,S.view==='roster'&&S.pEdit);return}
-  if(d.nav){if(d.nav!=='roster')S.pEdit=false;S.view=d.nav;S.meetId=null;S.build=null;S.editId=null;S.draft=null;render();toTop();return}
+  if(d.nav){if(t.closest('.bnav')||d.nav==='clubs')S.back=[];else if(d.nav!==S.view)pushBack();if(d.nav!=='roster')S.pEdit=false;S.view=d.nav;S.meetId=null;S.build=null;S.editId=null;S.draft=null;render();toTop();return}
   if(d.mtab){S.meetTab=d.mtab;render();toTop();return}
   if(d.rank){S.rankType=d.rank;render();return}
   if(d.gtype){S.gen.type=d.gtype;render();return}
@@ -2089,6 +2097,7 @@ document.addEventListener('click',e=>{
     case 'build':S.build={step:'choose',preview:null,drafts:[]};render();toTop();break;
     case 'b-exit':S.build=null;render();break;
     case 'b-back':bBack();break;
+    case 'nav-back':goBack(false);break;
     case 'b-preview':case 'b-shuffle':if(m&&S.build.step==='ko'){S.build.preview=koDraw(seedOrder(m));render();if(d.act==='b-preview')toTop();break}
       if(m){const p=buildMatches(m,S.build.step);if(p){S.build.preview=p;render();if(d.act==='b-preview')toTop()}}break;
     case 'b-confirm':bConfirm();break;
