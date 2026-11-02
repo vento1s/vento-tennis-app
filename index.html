@@ -644,6 +644,7 @@ body::before{background:var(--bg)!important}
 .kpl{grid-template-columns:64px 1fr auto}
 .kpl-l{font-size:12px;font-weight:900;color:var(--ink-2);background:var(--field);border-radius:8px;padding:4px 0;text-align:center}
 .kpl-l.g{background:var(--gold);color:var(--on-gold)} .kpl-l.s{background:#C9D1DA;color:#1C2228} .kpl-l.b{background:var(--bronze-bg);color:var(--bronze)}
+.round-h b{white-space:nowrap;flex:none}
 .card.setc{padding:10px 12px;gap:8px}
 .setrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sc2{display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--field);border-radius:12px;padding:4px 4px 4px 12px}
@@ -912,7 +913,7 @@ function seasonRows(type){
   return rows.sort((a,b)=>((b.p>0)-(a.p>0))||(lgPts(b)-lgPts(a))||((b.gf-b.ga)-(a.gf-a.ga))||rate(b)-rate(a)||dn(a.id).localeCompare(dn(b.id),'ko'));
 }
 
-function mvpOf(meet){if(meet.bracket){const c=koChampion(meet);if(c)return c}const ms=meetMatches(meet.id).filter(done);if(!ms.length)return null;const r=tally(ms,meet.attendees||[],'all')[0];return r&&r.w?r.id:null}
+function mvpOf(meet){if(meet.bracket){const c=koChampion(meet);if(c)return c}const ms=meetMatches(meet.id).filter(done);if(!ms.length)return null;const r=tally(ms,meet.attendees||[],'all').sort((a,b)=>lgPts(b)-lgPts(a)||((b.gf-b.ga)-(a.gf-a.ga)))[0];return r&&r.w?r.id:null}
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 const pk=(a,b)=>a<b?a+'|'+b:b+'|'+a;
@@ -938,6 +939,7 @@ function computeElo(){
   return {R,delta,hist};
 }
 const pOf=id=>ELO.R[id]??P0;
+let PTC=null;const ptOf=id=>{if(!PTC)PTC=Object.fromEntries(seasonStats('all').map(r=>[r.id,lgPts(r)]));return PTC[id]||0};
 const sgn=v=>v>0?'+'+v:v<0?'−'+Math.abs(v):'0';
 function dayDelta(meetId){const t={};meetMatches(meetId).forEach(x=>{const d=ELO.delta[x.id];if(!d)return;x.a.forEach(id=>t[id]=(t[id]||0)+d.a);x.b.forEach(id=>t[id]=(t[id]||0)+d.b)});return t}
 
@@ -1012,7 +1014,7 @@ function meetText(m){
     lines.push('');
   });
   const rows=tally(ms,att,'all').filter(r=>r.p>0),dd=dayDelta(m.id);
-  if(rows.length){lines.push('🏆 이날 순위');rows.forEach((r,i)=>lines.push(`${i+1}. ${dn(r.id)} ${recK(r)} (${sgn(dd[r.id]||0)}P)`))}
+  if(rows.length){lines.push('🏆 이날 순위');rows.forEach((r,i)=>lines.push(`${i+1}. ${dn(r.id)} ${recK(r)} (${lgPts(r)}점)`))}
   return lines.join('\n').trim();
 }
 
@@ -1037,7 +1039,7 @@ function scoreModal(id){
       if(a==null||b==null){el.querySelector('#sp-err').textContent='두 팀 점수를 모두 골라 주세요.';return}
       if(x.ko&&a===b){el.querySelector('#sp-err').textContent='토너먼트는 승자가 있어야 해요. 무승부는 안 돼요.';return}
       closeModal();put('matches',{...x,sa:a,sb:b});
-      const d=ELO.delta[x.id];toast(a===b?`무승부로 저장했어요.${d&&d.a?` (${x.a.map(dn).join('·')} ${sgn(d.a)}P)`:''}`:d?`저장했어요. ${(a>b?x.a:x.b).map(dn).join('·')} ${sgn(Math.abs(d.a))}P`:'저장했어요.');
+      toast(a===b?`무승부로 저장했어요. 모두 +${LG.d}점`:`저장했어요. ${(a>b?x.a:x.b).map(dn).join('·')} +${LG.w}점 · ${(a>b?x.b:x.a).map(dn).join('·')} +${LG.l}점`);
     };
     el.querySelectorAll('.pad').forEach(p=>p.querySelectorAll('button').forEach(bt=>bt.onclick=()=>{
       const n=+bt.dataset.n;if(p.dataset.side==='a')a=n;else b=n;el.querySelector('#sp-err').textContent='';draw();
@@ -1059,12 +1061,13 @@ const CHOICES=[
 const modeName=k=>(CHOICES.find(c=>c[0]===k)||['','매치'])[1];
 function refOrder(refId,att){
   const st=Object.fromEntries(seasonStats('all').map(r=>[r.id,r]));
-  if(!refId||refId==='p')return att.slice().sort((x,y)=>pOf(y)-pOf(x));
-  const rm=S.meets.find(x=>x.id===refId);if(!rm)return att.slice().sort((x,y)=>pOf(y)-pOf(x));
+  const byPt=(x,y)=>ptOf(y)-ptOf(x)||pOf(y)-pOf(x);
+  if(!refId||refId==='p')return att.slice().sort(byPt);
+  const rm=S.meets.find(x=>x.id===refId);if(!rm)return att.slice().sort(byPt);
   const rows=tally(meetMatches(rm.id),att,'all');
-  const lg=rm.scoring==='league';
+  const lg=true;
   rows.sort((a,b)=>((b.p>0)-(a.p>0))||(lg?(lgPts(b)-lgPts(a)):(b.w-a.w||rate(b)-rate(a)))||((b.gf-b.ga)-(a.gf-a.ga))||(pOf(b.id)-pOf(a.id)));
-  const played=rows.filter(r=>r.p>0).map(r=>r.id),rest=att.filter(id=>!played.includes(id)).sort((x,y)=>pOf(y)-pOf(x));
+  const played=rows.filter(r=>r.p>0).map(r=>r.id),rest=att.filter(id=>!played.includes(id)).sort(byPt);
   return [...played,...rest];
 }
 function seedOrder(meet){
@@ -1245,7 +1248,7 @@ function evCard(m){
   const tags=[m.env,m.surface].filter(Boolean);
   const prog=!ms.length?'<span class="ev-s">대진 전</span>':fin===ms.length?`<span class="ev-s done">경기 ${ms.length} 완료</span>`:`<span class="ev-s">경기 <b>${fin}</b>/${ms.length}</span>`;
   if(m.date<TODAY)return `<button class="evc past" data-meet="${m.id}"><div class="evp-d"><b class="tab-n">${d.getMonth()+1}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
-    <div class="evp-m"><b>${esc(m.title||m.place||'매치데이')}</b><span>${ms.length?`경기 ${fin}${fin<ms.length?'/'+ms.length:''}개`:'기록 없음'}${m.scoring==='league'?' · 리그':''}</span></div>
+    <div class="evp-m"><b>${esc(m.title||m.place||'매치데이')}</b><span>${ms.length?`경기 ${fin}${fin<ms.length?'/'+ms.length:''}개`:'기록 없음'}</span></div>
     ${mvp?`<span class="evp-mvp">${IC.crown}<b>${esc(dn(mvp))}</b><i>MVP</i></span>`:''}</button>`;
   return `<button class="evc ${isT?'today':''}" data-meet="${m.id}">
     <div class="ev-top"><div class="ev-l"><div class="ev-date"><span>${MON[d.getMonth()]}</span><b class="tab-n">${pad(d.getDate())}</b><i>${DOW[d.getDay()]}</i></div>${st}</div>
@@ -1295,7 +1298,7 @@ function medal(n,cls){const [l,m,d]=MEDAL[n];return `<span class="medal ${cls}" 
 function rankRows(rows,day,league){
   return rows.map((r,i)=>{const ranked=r.p>0;const rk=ranked?i+1:'–';const cls=ranked&&i<3?'r'+(i+1):'';
     const gd=r.gf-r.ga;
-    const last=league?`<span class="c d"><b class="pt">${lgPts(r)}<small>점</small></b><span>${gd>0?'+':''}${gd} 득실</span></span>`:day?(()=>{const v=day[r.id]||0;return `<span class="c d"><b class="${v>0?'pos':v<0?'neg':''}">${sgn(v)}</b><span>POINT</span></span>`})()
+    const last=true?`<span class="c d"><b class="pt">${lgPts(r)}<small>점</small></b><span>${gd>0?'+':''}${gd} 득실</span></span>`:day?(()=>{const v=day[r.id]||0;return `<span class="c d"><b class="${v>0?'pos':v<0?'neg':''}">${sgn(v)}</b><span>POINT</span></span>`})()
       :`<span class="c d"><b class="pt">${pOf(r.id)}</b><span>POINT</span></span>`;
     return `<button class="rk ${cls}" data-member="${r.id}">${ranked&&i<3?medal(i+1,'rk-m'):`<span class="n">${rk}</span>`}<span class="nm">${esc(dn(r.id))}${ranked&&i===0?IC.spark:''}</span>
     <span class="c"><b class="wl"><em class="w">${r.w}승</em>${r.d?`<em class="d">${r.d}무</em>`:''}<em class="l">${r.l}패</em></b><span>RECORD</span></span><span class="c att"><b class="blue">${pct(r)}</b><span>RATE</span></span>${last}</button>`}).join('');
@@ -1317,12 +1320,12 @@ function sideHtml(ids,win,lose,right,ptag,ed){
 }
 function matchCard(x,opt={}){
   const fin=done(x),aw=fin&&x.sa>x.sb,bw=fin&&x.sb>x.sa,tie=fin&&x.sa===x.sb,dl=ELO.delta[x.id];
-  const pt=v=>fin&&dl&&opt.score!==false?`<span class="pd ${v>0?'up':v<0?'dn':'dr'}">${sgn(v)}P</span>`:'';
+  const pt=v=>fin&&opt.score!==false?`<span class="pd ${v===LG.w?'up':v===LG.l?'dn':'dr'}">+${v}점</span>`:'';
   const center=opt.score===false?`<span class="score vs">VS</span>`
     :`<button class="score ${tie?'draw':''} ${fin?'':'empty'}" data-scoreb="${x.id}" aria-label="점수 입력">${fin?`${x.sa}-${x.sb}`:'점수'}${tie?'<small>무승부</small>':fin?'':'<small>탭해서 입력</small>'}</button>`;
   return `<div class="mc"><div class="mc-h">${opt.no?`<span class="mc-no">#${opt.no}</span>`:''}${opt.date?`<span class="mc-meta">${IC.cal}${x._date||''}</span>`:''}<span class="mc-meta">${x.ko?(()=>{const mt=S.meets.find(y=>y.id===x.meetId);const P=mt&&mt.bracket?mt.bracket.size:8;return x.ko.third?'3·4위전':koName(P,x.ko.r)+(P/Math.pow(2,x.ko.r+1)>1?` ${x.ko.i+1}경기`:'')})():`R${x.round} · COURT ${x.court}`}</span>
       <span class="mc-type">${x.type==='D'?'복식 2:2':'단식 1:1'}</span>${opt.del?`<button class="x" data-delmatch="${x.id}" aria-label="경기 삭제">${IC.x}</button>`:''}${opt.rm?`<button class="x" data-rmdraft="${x.id}" aria-label="빼기">${IC.x}</button>`:''}</div>
-    <div class="mc-b">${sideHtml(x.a,aw,bw,false,pt(dl&&dl.a),opt.edit?x.id+'|a':'')}${center}${sideHtml(x.b,bw,aw,true,pt(dl&&dl.b),opt.edit?x.id+'|b':'')}</div></div>`;
+    <div class="mc-b">${sideHtml(x.a,aw,bw,false,pt(aw?LG.w:bw?LG.l:LG.d),opt.edit?x.id+'|a':'')}${center}${sideHtml(x.b,bw,aw,true,pt(bw?LG.w:aw?LG.l:LG.d),opt.edit?x.id+'|b':'')}</div></div>`;
 }
 function previewCard(x,removable,edit){return matchCard(x,{score:false,rm:removable,edit})}
 function scoreCard(x){const list=meetMatches(x.meetId);return matchCard(x,{no:list.findIndex(y=>y.id===x.id)+1,del:true})}
@@ -1335,7 +1338,7 @@ function meetHero(m){
   return `<div class="club home mhero2"><div class="mh2-top"><div class="ev-l"><div class="ev-date sm ${isT?'tdy':''}"><span>${MON[d.getMonth()]}</span><b class="tab-n">${pad(d.getDate())}</b><i>${DOW[d.getDay()]}</i></div>${st}</div>
       <div class="ev-main"><div class="ev-th"><b>${esc(m.title||m.place||'매치데이')}</b><button class="hedit" data-act="meet-info" aria-label="매치데이 정보 수정">${IC.edit}</button></div>
         <div class="ev-info">${m.time?`<span>${IC.n_hist}${esc(m.time)}</span>`:''}${m.place?`<span>${IC.pin}${esc(m.place)}</span>`:''}</div>
-        ${tags.length||m.scoring==='league'?`<div class="ev-tags">${tags.map(t=>`<i>${esc(t)}</i>`).join('')}${m.scoring==='league'?'<i class="lg">리그 승3·패1</i>':''}${m.bracket?'<i class="lg">토너먼트</i>':''}</div>`:''}</div></div>
+        ${tags.length||m.bracket?`<div class="ev-tags">${tags.map(t=>`<i>${esc(t)}</i>`).join('')}${m.bracket?'<i class="lg">토너먼트</i>':''}</div>`:''}</div></div>
     <div class="kpis"><button data-act="edit-att"><span>참가</span><b>${attOf(m).length}<small>명</small></b></button><button data-mtab="matches"><span>경기</span><b>${fin}<small>/${ms.length}</small></b></button><button data-mtab="ranking"><span>MVP</span><b class="${mvp?'mvpb':''}">${mvp?esc(dn(mvp)):'–'}</b></button></div></div>
     <div class="seg mtabs2">${tabs.map(([k,l])=>`<button data-mtab="${k}" aria-pressed="${S.meetTab===k}">${l}</button>`).join('')}</div>`;
 }
@@ -1357,11 +1360,11 @@ function viewMeet(m){
     return h+roundsHtml(ms,att,scoreCard);
   }
   if(S.meetTab==='ranking'){
-    const lg=m.scoring==='league';
+    const lg=true;
     let rows=tally(ms,att,'all');
     if(lg)rows=rows.sort((a,b)=>((b.p>0)-(a.p>0))||(lgPts(b)-lgPts(a))||((b.gf-b.ga)-(a.gf-a.ga))||dn(a.id).localeCompare(dn(b.id),'ko'));
     if(m.bracket){const pl=koPlaces(m);if(pl.length)h+=`<div class="secl"><span>토너먼트 결과</span></div><div class="hlist">${pl.map(p=>`<div class="lr kpl"><span class="kpl-l ${p.l==='우승'?'g':p.l==='준우승'?'s':p.l==='3위'?'b':''}">${p.l}</span><span class="lr-t"><b>${esc(dn(p.id))}</b></span><span></span></div>`).join('')}</div>`}
-    return h+`${lg?`<p class="hint" style="margin:0;padding:0 4px">리그 점수: 승 ${LG.w}점 · 무 ${LG.d}점 · 패 ${LG.l}점. 같으면 득실 순이에요.</p>`:''}<div class="hof"><div class="hof-b">${rows.length?rankRows(rows,dayDelta(m.id),lg):`<p class="muted" style="text-align:center;padding:20px;margin:0">참가자를 먼저 선택해 주세요.</p>`}</div></div>
+    return h+`${lg?`<p class="hint" style="margin:0;padding:0 4px">리그 점수: 승 ${LG.w}점 · 무 ${LG.d}점 · 패 ${LG.l}점. 같으면 득실 순이에요.</p>`:''}<div class="hof"><div class="hof-b">${rows.length?rankRows(rows,null,true):`<p class="muted" style="text-align:center;padding:20px;margin:0">참가자를 먼저 선택해 주세요.</p>`}</div></div>
       <button class="btn-ghost" data-nav="season" style="justify-self:center">시즌 전체 순위 보기</button>`;
   }
   h+=`<div class="card tight"><span class="eyebrow">Matches</span><div class="infoline"><b>경기 ${ms.length}개 · 기록 ${ms.filter(done).length}개</b><span class="muted">경기는 경기 탭에서 만들고 점수를 넣어요.</span></div>
@@ -1411,8 +1414,8 @@ function viewBuilder(m){
     const refs=S.meets.filter(x=>x.id!==m.id&&meetMatches(x.id).some(done)).sort((a,c)=>c.date.localeCompare(a.date));
     let h=`<div class="bhead"><span class="eyebrow">${esc(modeName(b.step))}</span><p class="big" style="font-size:19px">참고하고 싶은 매치데이가 있나요?</p><p class="hint">고른 매치데이의 순위대로 시드가 정해져요. 정한 뒤에도 순서를 바꿀 수 있어요.</p></div>`;
     h+=`<div class="clist">${refs.map(x=>{const d=pd(x.date),n=meetMatches(x.id).filter(done).length,cur=m.seedRef===x.id;
-      return `<button class="refc ${cur?'on':''}" data-sref="${x.id}"><div class="evp-d"><b class="tab-n">${d.getMonth()+1}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div><span class="evp-m"><b>${esc(x.title||x.place||'매치데이')}</b><span>경기 ${n}개${x.scoring==='league'?' · 리그 점수 순':' · 승수 순'}</span></span>${IC.next}</button>`}).join('')}
-      <button class="refc ${!m.seedRef||m.seedRef==='p'?'':''}" data-sref="p"><div class="evp-d"><b>P</b><span>포인트</span></div><span class="evp-m"><b>시즌 P 포인트 순</b><span>참고할 매치데이 없이 전체 기록으로</span></span>${IC.next}</button></div>`;
+      return `<button class="refc ${cur?'on':''}" data-sref="${x.id}"><div class="evp-d"><b class="tab-n">${d.getMonth()+1}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div><span class="evp-m"><b>${esc(x.title||x.place||'매치데이')}</b><span>경기 ${n}개 · 점수 순</span></span>${IC.next}</button>`}).join('')}
+      <button class="refc ${!m.seedRef||m.seedRef==='p'?'':''}" data-sref="p"><div class="evp-d"><b>점</b><span>시즌</span></div><span class="evp-m"><b>시즌 점수 순</b><span>참고할 매치데이 없이 전체 기록으로</span></span>${IC.next}</button></div>`;
     if(!refs.length)h+=`<p class="note">점수가 기록된 지난 매치데이가 아직 없어요.</p>`;
     return h;
   }
@@ -1423,7 +1426,7 @@ function viewBuilder(m){
       if(n<KO_MIN)return h+`<div class="empty"><p class="hint">토너먼트는 참가자가 ${KO_MIN}명 이상이어야 해요. 지금 ${n}명이에요.</p><button class="btn-blue" data-act="edit-att">참가자 고르기</button></div>`;
       h+=`<div class="card setc"><div class="kinfo"><span><b>${n}</b>명</span><i></i><span>${koName(P,0)}부터</span><i></i><span>시드 <b>${ns}</b>명</span>${P>n?`<i></i><span>부전승 ${P-n}</span>`:''}<em>단식</em></div>
         <button class="ktog" data-act="ko-third" aria-pressed="${b.third!==false}"><span><b>3·4위전</b><small>4강에서 진 두 명이 3위를 가려요</small></span><i></i></button></div>`;
-      h+=`<div class="refline">${IC.trophy}<span>참고: <b>${rm?esc(rm.title||rm.place||'매치데이')+' 순위':'시즌 P 포인트 순'}</b></span><button class="mini" data-act="sref-change">바꾸기</button></div><div class="card">${seedList(m,ns)}</div>`;
+      h+=`<div class="refline">${IC.trophy}<span>참고: <b>${rm?esc(rm.title||rm.place||'매치데이')+' 순위':'시즌 점수 순'}</b></span><button class="mini" data-act="sref-change">바꾸기</button></div><div class="card">${seedList(m,ns)}</div>`;
       if(m.bracket)h+=`<p class="note">이미 만든 대진표가 있어요. 새로 확정하면 점수가 없는 토너먼트 경기는 지우고 다시 만들어요.</p>`;
       return h;
     }
@@ -1435,7 +1438,7 @@ function viewBuilder(m){
     let h=`<div class="bhead"><span class="eyebrow">${esc(modeName(b.step))}</span></div>`;
     if(b.step==='seed'){const rm=m.seedRef&&m.seedRef!=='p'?S.meets.find(x=>x.id===m.seedRef):null;
       h+=settingsCard();
-      h+=`<div class="refline">${IC.trophy}<span>참고: <b>${rm?esc(rm.title||rm.place||'매치데이')+' 순위':'시즌 P 포인트 순'}</b></span><button class="mini" data-act="sref-change">바꾸기</button></div><div class="card">${seedList(m)}</div>`;}
+      h+=`<div class="refline">${IC.trophy}<span>참고: <b>${rm?esc(rm.title||rm.place||'매치데이')+' 순위':'시즌 점수 순'}</b></span><button class="mini" data-act="sref-change">바꾸기</button></div><div class="card">${seedList(m)}</div>`;}
     return b.step==='seed'?h:h+settingsCard();
   }
   let h=head('대진 미리보기','선수 이름을 누르면 다른 선수와 바꿀 수 있어요. 확정하기 전에는 저장되지 않아요.');
@@ -1460,7 +1463,7 @@ function seedList(m,ns){
   if(o.length<2)return `<p class="hint">참가자를 2명 이상 선택하면 시드를 정할 수 있어요.</p>`;
   const st=Object.fromEntries(seasonStats('all').map(r=>[r.id,r]));
   return `<div class="field"><div class="between"><span class="lbl">Seeds</span><button class="mini" data-act="seed-reset">처음 순서로</button></div>
-    <div class="seeds">${o.map((id,i)=>{const r=st[id];return `${ns&&i===ns?'<div class="seedcut">여기부터 비시드 · 무작위 배치</div>':''}<div class="seed ${ns&&i>=ns?'unseed':''}" data-sid="${id}"><span class="no">${ns&&i>=ns?'–':i+1}</span><span class="nm">${esc(dn(id))}</span><span class="rec">${pOf(id)}P${r&&r.p?` · <b class="wl"><em class="w">${r.w}승</em>${r.d?`<em class="d">${r.d}무</em>`:''}<em class="l">${r.l}패</em></b>`:''}</span><button class="grip" data-grip="${id}" aria-label="${esc(dn(id))} 드래그해서 시드 바꾸기 (키보드: 위·아래 화살표)">${IC.grip}</button></div>`}).join('')}</div>
+    <div class="seeds">${o.map((id,i)=>{const r=st[id];return `${ns&&i===ns?'<div class="seedcut">여기부터 비시드 · 무작위 배치</div>':''}<div class="seed ${ns&&i>=ns?'unseed':''}" data-sid="${id}"><span class="no">${ns&&i>=ns?'–':i+1}</span><span class="nm">${esc(dn(id))}</span><span class="rec">${ptOf(id)}점${r&&r.p?` · <b class="wl"><em class="w">${r.w}승</em>${r.d?`<em class="d">${r.d}무</em>`:''}<em class="l">${r.l}패</em></b>`:''}</span><button class="grip" data-grip="${id}" aria-label="${esc(dn(id))} 드래그해서 시드 바꾸기 (키보드: 위·아래 화살표)">${IC.grip}</button></div>`}).join('')}</div>
     <p class="hint">1번이 가장 강한 시드예요. 오른쪽 손잡이를 눌러 위아래로 끌면 순서가 바뀌고, 이 매치데이에 저장돼요.</p></div>`;
 }
 
@@ -1481,11 +1484,11 @@ function lastDelta(id){const h=ELO.hist[id]||[];return h.length>1?h[h.length-1].
 function viewHome(){
   if(S.loading)return loadingView();
   const c=clubInfo(S.clubId);const sm=seasonMeets();const played=seasonMatches().filter(done).length;
-  const ids=S.members.map(m=>m.id);const avg=ids.length?Math.round(ids.reduce((t,id)=>t+pOf(id),0)/ids.length):P0;
+  const ids=S.members.map(m=>m.id);const top1=seasonRows('all').find(r=>r.p>0);
   const am=cfg().pin&&isAdmin();
   let h=`<header class="clubbar"><div class="cb-top"><button class="cb-back" data-nav="clubs" aria-label="내 클럽 목록">${IC.back}</button>${clubPic(c,'sm')}<div class="cb-t"><b>${esc(c.name)}</b>${c.intro?`<span>${esc(c.intro)}</span>`:''}</div>
     <button class="cb-ic" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button><button class="cb-ic ${am?'on':''}" data-act="admin-panel" aria-label="${am?'관리자 모드':'관리자'}">${IC.lock}</button></div>
-    <div class="cb-k"><button data-nav="roster">선수 <b>${ids.length}</b>명</button><i></i><button data-nav="history">${S.season} 경기 <b>${played}</b></button><i></i><button data-nav="season">평균 <b>${avg}</b>P</button>${am?'<em>관리자 모드</em>':''}</div></header>`;
+    <div class="cb-k"><button data-nav="roster">선수 <b>${ids.length}</b>명</button><i></i><button data-nav="history">${S.season} 경기 <b>${played}</b></button><i></i><button data-nav="season">${top1?`1위 <b>${esc(dn(top1.id))}</b> ${lgPts(top1)}점`:'1위 <b>–</b>'}</button>${am?'<em>관리자 모드</em>':''}</div></header>`;
   const next=sm.find(m=>m.date>=TODAY);const last=sm.filter(m=>m.date<TODAY).slice(-1)[0];const show=next||last;
   if(show)h+=`<div class="secl"><span class="${show.date===TODAY?'tdy':''}">${show.date===TODAY?'오늘의 매치데이':next?'다가오는 매치데이':'최근 매치데이'}</span>${next&&show.date!==TODAY?`<button class="mini" data-nav="feed">전체 보기</button>`:''}</div>`+evCard(show);
   const rt=S.rankType==='D'?'D':'S';const rows=seasonRows(rt).filter(r=>r.p>0);
@@ -1529,7 +1532,7 @@ function viewPlayers(){
     return `<button class="pcard ${ed?'ed':''}" data-member="${m.id}"><span class="avw">${avatar(m.id,false).replace('class="av','class="av lg')}${ed?`<span class="camb" data-pcam="${m.id}" role="button" aria-label="${esc(dn(m.id))} 사진 넣기">${IC.cam}</span>`:''}</span>
       <span class="pc-t"><b>${esc(dn(m.id))}</b>${m.name&&m.name!==dn(m.id)?`<small>${esc(m.name)}</small>`:''}</span>
       ${tags.length?`<span class="pc-tags">${tags.map(x=>`<i>${esc(x)}</i>`).join('')}</span>`:''}
-      <span class="pc-f"><span>출석 <b>${a}</b>회</span><span class="pc-p">${pOf(m.id)}P</span></span>
+      <span class="pc-f"><span>출석 <b>${a}</b>회</span><span class="pc-p">${ptOf(m.id)}점</span></span>
       ${l?`<span class="pc-l">최근 ${esc(fmtK(l).replace(/\s\(.\)/,''))}</span>`:''}</button>`}).join('')}</div>
     <p class="note">카드를 누르면 프로필과 전적을 볼 수 있어요.</p>`;
   return h;
@@ -1550,7 +1553,7 @@ function viewRoster(){
   let h=`<div class="between" id="roster-sec" style="padding-top:8px"><h2 class="h1">Players · ${S.members.length}</h2><button class="btn-blue" data-act="add-member">${IC.plus}ADD</button></div>`;
   h+=`<div class="card">
     ${S.members.length?`<div class="players">${members().map(m=>`<button class="pl" data-member="${m.id}">${esc(dn(m.id))}</button>`).join('')}</div>`:`<p class="muted" style="margin:0">멤버를 추가해 주세요.</p>`}
-    <p class="hint">멤버를 누르면 P 그래프와 시즌 기록, 최고의 파트너를 볼 수 있어요.</p></div>`;
+    <p class="hint">멤버를 누르면 점수 그래프와 시즌 기록, 최고의 파트너를 볼 수 있어요.</p></div>`;
   const c=cfg(),adm=isAdmin();
   h+=`<div class="card tight"><span class="eyebrow">Admin</span><div class="infoline"><b>${!c.pin?'관리자 비밀번호 없음':adm?'관리자 모드 사용 중':'회원 모드'}</b>
     <span class="muted">${!c.pin?'비밀번호를 정하면 매치데이 생성·삭제, 참가자와 멤버 수정은 관리자만 할 수 있어요. 점수 입력은 누구나 가능해요.':adm?'이 기기에서 관리자 기능을 쓸 수 있어요.':'점수 입력과 보기만 할 수 있어요. 관리 기능은 비밀번호가 필요해요.'}</span></div>
@@ -1585,7 +1588,7 @@ const scBy=dy=>{const e=scEl();if(e)e.scrollBy(0,dy);else window.scrollBy(0,dy)}
 const vpBox=()=>{const e=scEl();if(!e)return {top:0,h:window.innerHeight};const r=e.getBoundingClientRect();return {top:r.top,h:r.height}};
 const TOP=['clubs','home','feed','season','history','roster'];
 function render(){
-  ELO=computeElo();
+  ELO=computeElo();PTC=null;
   if(drag){pending=true;return}
   const ae=document.activeElement;
   if(ae&&ae.matches&&ae.matches('#view input:not([type=date]), .modal input')){pending=true;return}
@@ -1707,7 +1710,7 @@ function qmSave(){
   const mt={id:uid(),meetId:meet.id,round,court:1,type:q.type,a,b,sa:q.sa,sb:q.sb,createdAt:Date.now()};
   put('matches',mt);const dl=ELO.delta[mt.id];
   S.qm={date:q.date,meetId:q.meetId,type:q.type,a:[null,null],b:[null,null],sa:null,sb:null};render();toTop();
-  toast(`저장했어요. ${q.sa===q.sb?'무승부':(q.sa>q.sb?a:b).map(dn).join('·')+' 승'}${dl?` ${sgn(Math.abs(dl.a))}P`:''}`);
+  toast(q.sa===q.sb?`무승부로 저장했어요. 모두 +${LG.d}점`:`저장했어요. ${(q.sa>q.sb?a:b).map(dn).join('·')} +${LG.w}점 · ${(q.sa>q.sb?b:a).map(dn).join('·')} +${LG.l}점`);
 }
 function meetInfoModal(m){
   const venues=[...new Set([...BASE_VENUES,...S.meets.map(x=>x.place).filter(Boolean)])];
@@ -1719,7 +1722,7 @@ function meetInfoModal(m){
       <label class="inp" id="mi-plw">${IC.pin}<input id="mi-place" type="text" value="${esc(st.custom?st.place:'')}" placeholder="장소 이름"></label></div>
     <div class="field"><span class="lbl">환경</span><div class="seg" id="mi-env">${['야외','실내'].map(v=>`<button data-me="${v}">${v}</button>`).join('')}</div></div>
     <div class="field"><span class="lbl">코트 종류</span><div class="seg" id="mi-sf">${['하드','클레이','인조잔디'].map(v=>`<button data-ms="${v}">${v}</button>`).join('')}</div></div>
-    <div class="field"><span class="lbl">순위 방식</span><div class="seg" id="mi-sc">${[['','P 포인트'],['league','리그 (승3 · 패1)']].map(([k,l])=>`<button data-msc="${k}">${l}</button>`).join('')}</div></div>
+    
     <button class="btn-navy" id="mi-save">저장</button>`,el=>{
     let sc=m.scoring||'';
     const drawSc=()=>el.querySelectorAll('[data-msc]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.msc===sc));
@@ -1877,7 +1880,7 @@ function memberModal(id,openEdit){
       ${recent.length?`<div class="form"><span class="lbl">최근</span><div>${recent.map(r=>`<i class="${r}">${KR[r]}</i>`).join('')}</div></div>`:''}</div>
       ${sparkline(ph,{base:null,up:true,label:`${tn} 누적 점수`,empty:'경기 기록이 쌓이면 누적 점수 그래프가 그려져요.'})}
       <div class="stats4" style="grid-template-columns:repeat(${2+(s.p>0||!d.p?1:0)+(d.p>0?1:0)},1fr)"><div class="stat"><b>${a.att}</b><em>회</em><span>출석</span></div>${s.p>0||!d.p?box(s,'단식'):''}${d.p>0?box(d,'복식'):''}<div class="stat"><b>${pct(a)}</b><em>${a.p}전</em><span>승률</span></div></div>
-      <p class="hint">${tn} 누적 점수 그래프 · 승 3점 · 무 2점 · 패 1점 · 실력 ${pOf(id)}P${best?` · 최고의 파트너 <b style="color:var(--gold)">${esc(dn(best[0]))}</b> (${best[1].w}승 ${best[1].p-best[1].w}패)`:''}</p>`;
+      <p class="hint">${tn} 누적 점수 그래프 · 승 3점 · 무 2점 · 패 1점 ${best?` · 최고의 파트너 <b style="color:var(--gold)">${esc(dn(best[0]))}</b> (${best[1].w}승 ${best[1].p-best[1].w}패)`:''}</p>`;
     if(mine.length){
       const h2h={};
       const rowsH=mine.slice().reverse().map(x=>{const inA=x.a.includes(id);const me=inA?x.a:x.b,op=inA?x.b:x.a;const ms=inA?x.sa:x.sb,os=inA?x.sb:x.sa;const r=resOf(x);
@@ -1896,7 +1899,7 @@ function memberModal(id,openEdit){
       <div class="field"><span class="lbl">NTRP</span><label class="inp"><select id="m-ntrp" class="sel"><option value="">선택 안 함</option>${['2.0','2.5','3.0','3.5','4.0','4.5','5.0'].map(v=>`<option ${cur.ntrp===v?'selected':''}>${v}</option>`).join('')}</select></label></div></div>
     <div class="field"><span class="lbl">주 사용 손</span><div class="seg" id="m-hand">${[['','미입력'],['R','오른손'],['L','왼손']].map(([k,l])=>`<button data-mh="${k}" aria-pressed="${(cur.hand||'')===k}">${l}</button>`).join('')}</div></div>
     <div class="field"><span class="lbl">복식 선호 사이드</span><div class="seg" id="m-side">${[['','상관없음'],['deuce','듀스(오른쪽)'],['ad','애드(왼쪽)']].map(([k,l])=>`<button data-msd="${k}" aria-pressed="${(cur.side||'')===k}">${l}</button>`).join('')}</div></div>
-    <div class="field"><span class="lbl">시작 P</span><label class="inp"><input id="m-r0" type="number" inputmode="numeric" value="${Number.isFinite(cur.rating0)?cur.rating0:P0}" aria-label="시작 포인트"></label><span class="hint">실력 차이가 크면 시작 점수를 다르게 줄 수 있어요. 기본 ${P0}.</span></div>
+    
     <button class="btn-navy" id="m-save">${isNew?'추가':'저장'}</button>
     ${isNew?`<button class="btn-ghost imgadd" id="m-img">${IC.cam}이미지로 한 번에 추가<small>카톡 명단 · 투표 · 대진표 캡처</small></button>`:''}
     ${isNew?'':`<div id="m-delbox"><button class="btn-danger" id="m-del">멤버 삭제</button></div>`}`;
@@ -1911,10 +1914,10 @@ function memberModal(id,openEdit){
     el.querySelectorAll('[data-msd]').forEach(b=>b.onclick=()=>{side=b.dataset.msd;el.querySelectorAll('[data-msd]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.msd===side))});
     drawP();
     sv.onclick=()=>{
-      const name=el.querySelector('#m-name').value.trim(),short=el.querySelector('#m-short').value.trim();const r0=Math.round(+el.querySelector('#m-r0').value);
+      const name=el.querySelector('#m-name').value.trim(),short=el.querySelector('#m-short').value.trim();const r0=NaN;
       if(!name&&!short){toast('이름을 입력해 주세요.');return}
       const obj={...cur,id:cur.id||uid(),name:name||short,short:short||name.slice(1)||name,order:cur.order??(S.members.length+1)};
-      if(Number.isFinite(r0)&&r0>0&&r0!==P0)obj.rating0=r0;else delete obj.rating0;
+      
       const yrs=el.querySelector('#m-yrs').value.trim(),ntrp=el.querySelector('#m-ntrp').value;
       const setOpt=(k,v)=>{if(v!==''&&v!=null)obj[k]=v;else delete obj[k]};
       setOpt('photo',photo);setOpt('years',yrs===''?'':Math.max(0,Math.round(+yrs)));setOpt('ntrp',ntrp);setOpt('hand',hand);setOpt('side',side);
