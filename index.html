@@ -699,6 +699,22 @@ body::before{background:var(--bg)!important}
 .stat{background:var(--field);border-radius:12px;padding:8px 4px;text-align:center;display:grid;gap:2px}
 .stat b{font-family:var(--f-sport);font-style:italic;font-weight:900;font-size:21px}
 .stat em{font-style:normal;font-size:11px;font-weight:800;color:var(--blue);margin-top:-2px}
+.gsec{display:grid;gap:8px}
+.h2h{display:flex;flex-wrap:wrap;gap:6px}
+.h2h span{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--ink-2);background:var(--field);border:1px solid var(--line);padding:4px 10px;border-radius:999px}
+.h2h span b{font-weight:900;color:var(--ink)}
+.h2h span.w{border-color:rgba(255,90,95,.45)} .h2h span.l{border-color:rgba(78,168,255,.45)}
+.glist{display:grid;background:var(--field);border-radius:14px;overflow:hidden}
+.gl{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--line)}
+.gl:first-child{border-top:0}
+.gl-r{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-size:12.5px;font-weight:900}
+.gl.w .gl-r{background:#FF5A5F;color:#fff} .gl.l .gl-r{background:#2F6FB8;color:#fff} .gl.d .gl-r{background:var(--field-2);color:var(--ink-2)}
+.gl-t{display:grid;min-width:0}
+.gl-t b{font-weight:900;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gl-t small{font-size:11px;color:var(--muted)}
+.gl-s{font-family:var(--f-sport);font-style:italic;font-weight:900;font-size:18px;color:var(--muted)}
+.gl-s em{font-style:italic;color:var(--ink)}
+.gl.w .gl-s em{color:#FF7A7E}
 .stat span{font-size:10.5px;font-weight:800;color:var(--muted)}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(112px + env(safe-area-inset-bottom,0px));background:var(--blue);color:var(--on-blue);font-weight:700;padding:11px 18px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px);text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.4)}
@@ -1674,6 +1690,16 @@ function memberModal(id,openEdit){
       ${sparkline(ph,{base:null,up:true,label:`${tn} 누적 점수`,empty:'경기 기록이 쌓이면 누적 점수 그래프가 그려져요.'})}
       <div class="stats4"><div class="stat"><b>${a.att}</b><em>회</em><span>출석</span></div>${box(s,'단식')}${box(d,'복식')}<div class="stat"><b>${pct(a)}</b><em>${a.p}전</em><span>승률</span></div></div>
       <p class="hint">${tn} 누적 점수 그래프 · 승 3점 · 무 2점 · 패 1점 · 실력 ${pOf(id)}P${best?` · 최고의 파트너 <b style="color:var(--gold)">${esc(dn(best[0]))}</b> (${best[1].w}승 ${best[1].p-best[1].w}패)`:''}</p>`;
+    if(mine.length){
+      const h2h={};
+      const rowsH=mine.slice().reverse().map(x=>{const inA=x.a.includes(id);const me=inA?x.a:x.b,op=inA?x.b:x.a;const ms=inA?x.sa:x.sb,os=inA?x.sb:x.sa;const r=resOf(x);
+        op.forEach(o=>{const e=h2h[o]=h2h[o]||{w:0,d:0,l:0};e[r]++});
+        const pr=me.filter(q=>q!==id);const dt=md[x.meetId]||'';
+        return `<div class="gl ${r}"><span class="gl-r">${KR[r]}</span><span class="gl-t"><b>vs ${op.map(dn).map(esc).join(' · ')}</b><small>${dt?esc(dt.slice(5).replace('-','.')):''}${x.type==='D'?` · 복식${pr.length?' · 파트너 '+esc(dn(pr[0])):''}`:' · 단식'}</small></span><span class="gl-s tab-n"><em>${ms}</em> : ${os}</span></div>`}).join('');
+      const hs=Object.entries(h2h).sort((x,y)=>(y[1].w+y[1].d+y[1].l)-(x[1].w+x[1].d+x[1].l)||y[1].w-x[1].w);
+      stat+=`<div class="gsec"><span class="lbl">상대 전적</span><div class="h2h">${hs.map(([o,e])=>`<span class="${e.w>e.l?'w':e.w<e.l?'l':''}"><b>${esc(dn(o))}</b>${e.w}승${e.d?' '+e.d+'무':''} ${e.l}패</span>`).join('')}</div></div>
+        <div class="gsec"><span class="lbl">경기 기록 · ${mine.length}경기</span><div class="glist">${rowsH}</div></div>`;
+    }
   }
   const form=`<div class="field"><span class="lbl">Display Name</span><label class="inp"><input id="m-short" type="text" value="${esc(cur.short||'')}" placeholder="예: 벤또" aria-label="표시 이름"></label></div>
     <div class="field"><span class="lbl">Full Name</span><label class="inp"><input id="m-name" type="text" value="${esc(cur.name)}" placeholder="예: 김태윤" aria-label="이름"></label></div>
