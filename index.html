@@ -698,7 +698,8 @@ body::before{background:var(--bg)!important}
 .stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .stat{background:var(--field);border-radius:12px;padding:8px 4px;text-align:center;display:grid;gap:2px}
 .stat b{font-family:var(--f-sport);font-style:italic;font-weight:900;font-size:21px}
-.stat span{font-family:var(--f-sport);font-style:italic;font-weight:900;font-size:9.5px;letter-spacing:.12em;color:var(--muted)}
+.stat em{font-style:normal;font-size:11px;font-weight:800;color:var(--blue);margin-top:-2px}
+.stat span{font-size:10.5px;font-weight:800;color:var(--muted)}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(112px + env(safe-area-inset-bottom,0px));background:var(--blue);color:var(--on-blue);font-weight:700;padding:11px 18px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px);text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .note{font-size:12px;color:var(--dim);text-align:center;margin:0}
@@ -1553,17 +1554,18 @@ function attModal(m){
       const ids=members().map(x=>x.id).filter(id=>sel.has(id));closeModal();put('meets',{...cur,attendees:ids});toast(`참가자 ${ids.length}명으로 저장했어요.`)};
   });
 }
-function sparkline(hist){
-  const pts=hist.map(h=>h.p);if(pts.length<2)return `<div class="spk-empty">경기 기록이 쌓이면 P 변화 그래프가 그려져요.</div>`;
+function sparkline(hist,o){
+  o=o||{};const BASE=o.base===undefined?P0:o.base;
+  const pts=hist.map(h=>h.p);if(pts.length<2)return `<div class="spk-empty">${o.empty||'경기 기록이 쌓이면 P 변화 그래프가 그려져요.'}</div>`;
   const W=300,H=96,pl=6,pr=6,pt=12,pb=14;
   let mn=Math.min(...pts),mx=Math.max(...pts);if(mx-mn<20){const c=(mx+mn)/2;mn=c-10;mx=c+10}
   const X=i=>pl+(W-pl-pr)*i/(pts.length-1),Y=v=>pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));
   const line=pts.map((v,i)=>`${i?'L':'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join('');
   const area=line+`L${X(pts.length-1).toFixed(1)},${H-pb}L${X(0).toFixed(1)},${H-pb}Z`;
-  const y0=Y(P0);const last=pts[pts.length-1],up=last>=pts[0];
-  return `<svg class="spk" viewBox="0 0 ${W} ${H}" role="img" aria-label="P 변화 ${pts[0]}에서 ${last}">
+  const y0=BASE==null?-1:Y(BASE);const last=pts[pts.length-1],up=o.up!=null?o.up:last>=pts[0];
+  return `<svg class="spk" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.label||'P 변화'} ${pts[0]}에서 ${last}">
     <defs><linearGradient id="spg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#0A8FD8" stop-opacity=".35"/><stop offset="1" stop-color="#0A8FD8" stop-opacity="0"/></linearGradient></defs>
-    ${y0>=pt&&y0<=H-pb?`<line x1="${pl}" x2="${W-pr}" y1="${y0}" y2="${y0}" stroke="#5D656C" stroke-dasharray="3 4" stroke-width="1"/><text x="${W-pr}" y="${y0-4}" text-anchor="end" fill="#8C959D" font-size="9" font-family="Roboto,sans-serif">${P0}</text>`:''}
+    ${y0>=pt&&y0<=H-pb?`<line x1="${pl}" x2="${W-pr}" y1="${y0}" y2="${y0}" stroke="#5D656C" stroke-dasharray="3 4" stroke-width="1"/><text x="${W-pr}" y="${y0-4}" text-anchor="end" fill="#8C959D" font-size="9" font-family="Roboto,sans-serif">${BASE}</text>`:''}
     <path d="${area}" fill="url(#spg)"/><path d="${line}" fill="none" stroke="#0A8FD8" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
     <circle cx="${X(pts.length-1)}" cy="${Y(last)}" r="4.5" fill="${up?'#FFD400':'#FF7E6E'}" stroke="#131415" stroke-width="2"/>
     <text x="${pl}" y="${H-2}" fill="#8C959D" font-size="9" font-family="Roboto,sans-serif">첫 경기</text><text x="${W-pr}" y="${H-2}" text-anchor="end" fill="#8C959D" font-size="9" font-family="Roboto,sans-serif">최근</text></svg>`;
@@ -1659,14 +1661,19 @@ function memberModal(id,openEdit){
     const a=seasonStats('all').find(r=>r.id===id),d=seasonStats('D').find(r=>r.id===id),s=seasonStats('S').find(r=>r.id===id);
     const pt={};seasonMatches().filter(done).filter(x=>x.type==='D').forEach(x=>{[[x.a,x.sa>x.sb],[x.b,x.sb>x.sa]].forEach(([tm,w])=>{if(tm.includes(id)){const o=tm.find(p=>p!==id);if(!o)return;pt[o]=pt[o]||{p:0,w:0};pt[o].p++;if(w)pt[o].w++}})});
     const best=Object.entries(pt).filter(([,v])=>v.p>=2).sort((x,y)=>(y[1].w/y[1].p)-(x[1].w/x[1].p)||y[1].p-x[1].p)[0];
-    const hist=ELO.hist[id]||[{p:P0}];const p=pOf(id),start=hist[0].p,ch=p-start;
-    const order=seasonRows('all').filter(r=>r.p>0).map(r=>r.id);const rk=order.indexOf(id);
-    const recent=hist.slice(1).slice(-6);
-    stat=`<div class="prof"><div><span class="eyebrow">${rk>=0?`${S.season} 시즌 ${rk+1}위`:'Point'}</span><div class="pbig tab-n">${p}<small>P</small></div><span class="pch ${ch>0?'pos':ch<0?'neg':''}">시작 ${start} 대비 ${sgn(ch)}</span>${pTags(m).length?`<span class="pc-tags" style="justify-content:flex-start;margin-top:6px">${pTags(m).map(x=>`<i>${esc(x)}</i>`).join('')}</span>`:''}</div>
-      ${recent.length?`<div class="form"><span class="lbl">최근</span><div>${recent.map(h=>`<i class="${h.r||'l'}">${(h.r||'l').toUpperCase()}</i>`).join('')}</div></div>`:''}</div>
-      ${sparkline(hist)}
-      <div class="stats4"><div class="stat"><b>${a.att}</b><span>ATTEND</span></div><div class="stat"><b>${recS(a)}</b><span>TOTAL</span></div><div class="stat"><b>${recS(d)}</b><span>DOUBLES</span></div><div class="stat"><b>${recS(s)}</b><span>SINGLES</span></div></div>
-      <p class="hint">${S.season} 시즌 승률 ${pct(a)} · 게임 득실 ${a.gf-a.ga>0?'+':''}${a.gf-a.ga}${best?` · 최고의 파트너 <b style="color:var(--gold)">${esc(dn(best[0]))}</b> (${best[1].w}승 ${best[1].p-best[1].w}패)`:''}</p>`;
+    const t=d.p>s.p?'D':'S',tr=t==='D'?d:s,tn=t==='D'?'복식':'단식';
+    const order=seasonRows(t).filter(r=>r.p>0).map(r=>r.id);const rk=order.indexOf(id);
+    const md=Object.fromEntries(S.meets.map(x=>[x.id,x.date||'']));
+    const mine=seasonMatches().filter(done).filter(x=>x.a.includes(id)||x.b.includes(id)).sort((x,y)=>(md[x.meetId]||'').localeCompare(md[y.meetId]||'')||(x.round-y.round)||(x.court-y.court));
+    const resOf=x=>{const my=x.a.includes(id)?x.sa-x.sb:x.sb-x.sa;return my>0?'w':my<0?'l':'d'};
+    let acc=0;const ph=[{p:0}];mine.filter(x=>x.type===t).forEach(x=>{acc+=LG[resOf(x)];ph.push({p:acc})});
+    const recent=mine.slice(-6).map(resOf);const gd=tr.gf-tr.ga;const KR={w:'승',l:'패',d:'무'};
+    const box=(r,l)=>`<div class="stat"><b>${recS(r)}</b><em>${lgPts(r)}점</em><span>${l}</span></div>`;
+    stat=`<div class="prof"><div><span class="eyebrow">${rk>=0?`${S.season} ${tn} ${rk+1}위`:`${S.season} ${tn}`}</span><div class="pbig tab-n">${lgPts(tr)}<small>점</small></div><span class="pch ${gd>0?'pos':gd<0?'neg':''}">${tr.p}전 ${recK(tr)} · 득실 ${gd>0?'+':''}${gd}</span>${pTags(m).length?`<span class="pc-tags" style="justify-content:flex-start;margin-top:6px">${pTags(m).map(x=>`<i>${esc(x)}</i>`).join('')}</span>`:''}</div>
+      ${recent.length?`<div class="form"><span class="lbl">최근</span><div>${recent.map(r=>`<i class="${r}">${KR[r]}</i>`).join('')}</div></div>`:''}</div>
+      ${sparkline(ph,{base:null,up:true,label:`${tn} 누적 점수`,empty:'경기 기록이 쌓이면 누적 점수 그래프가 그려져요.'})}
+      <div class="stats4"><div class="stat"><b>${a.att}</b><em>회</em><span>출석</span></div>${box(s,'단식')}${box(d,'복식')}<div class="stat"><b>${pct(a)}</b><em>${a.p}전</em><span>승률</span></div></div>
+      <p class="hint">${tn} 누적 점수 그래프 · 승 3점 · 무 2점 · 패 1점 · 실력 ${pOf(id)}P${best?` · 최고의 파트너 <b style="color:var(--gold)">${esc(dn(best[0]))}</b> (${best[1].w}승 ${best[1].p-best[1].w}패)`:''}</p>`;
   }
   const form=`<div class="field"><span class="lbl">Display Name</span><label class="inp"><input id="m-short" type="text" value="${esc(cur.short||'')}" placeholder="예: 벤또" aria-label="표시 이름"></label></div>
     <div class="field"><span class="lbl">Full Name</span><label class="inp"><input id="m-name" type="text" value="${esc(cur.name)}" placeholder="예: 김태윤" aria-label="이름"></label></div>
