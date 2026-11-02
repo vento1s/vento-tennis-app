@@ -518,6 +518,16 @@ body::before{background:var(--bg)!important}
 .club.home .kpis{padding-top:9px}
 .club.home .kpis b{font-size:20px}
 .club.home .kpis span{font-size:10.5px}
+.ev-r{flex:none}
+.ev-mvp{overflow:visible}
+.ev-n{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.evc.past{background:#16181A;border-color:rgba(255,255,255,.03)}
+.evc.past .ev-date{background:#26292C}
+.evc.past .ev-date span{color:var(--muted)}
+.evc.past .ev-date b{color:var(--ink-2)}
+.evc.past .ev-th b{color:var(--ink-2)}
+.evc.past .ev-info,.evc.past .ev-tags i{opacity:.75}
+.evc.past .avs .av{filter:saturate(.3) brightness(.85)}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -970,16 +980,16 @@ function evCard(m){
   const ms=meetMatches(m.id),fin=ms.filter(done).length,d=pd(m.date),mvp=mvpOf(m),isT=m.date===TODAY,up=m.date>TODAY;
   const dd=Math.round((pd(m.date)-pd(TODAY))/864e5);
   const st=isT?'<span class="st today">TODAY</span>':up?`<span class="st up">D-${dd}</span>`:fin?'<span class="st fin">FINAL</span>':'<span class="st none">NO RECORD</span>';
-  const att=attOf(m),show=att.slice(0,5);
+  const att=attOf(m),show=att.slice(0,4);
   const tags=[m.env,m.surface].filter(Boolean);
   const prog=!ms.length?'<span class="ev-s">대진 전</span>':fin===ms.length?`<span class="ev-s done">경기 ${ms.length} 완료</span>`:`<span class="ev-s">경기 <b>${fin}</b>/${ms.length}</span>`;
-  return `<button class="evc ${isT?'today':''}" data-meet="${m.id}">
+  return `<button class="evc ${isT?'today':m.date<TODAY?'past':''}" data-meet="${m.id}">
     <div class="ev-top"><div class="ev-l"><div class="ev-date"><span>${MON[d.getMonth()]}</span><b class="tab-n">${pad(d.getDate())}</b><i>${DOW[d.getDay()]}</i></div>${st}</div>
       <div class="ev-main"><div class="ev-th"><b>${esc(m.title||m.place||'매치데이')}</b></div>
         <div class="ev-info">${m.time?`<span>${IC.n_hist}${esc(m.time)}</span>`:''}${m.place?`<span>${IC.pin}${esc(m.place)}</span>`:''}</div>
         ${tags.length?`<div class="ev-tags">${tags.map(t=>`<i>${esc(t)}</i>`).join('')}</div>`:''}</div></div>
     <div class="ev-foot"><span class="avs">${show.map(id=>avatar(id,false)).join('')}${att.length>show.length?`<span class="av more">+${att.length-show.length}</span>`:''}</span>
-      <span class="ev-n">${att.length?`참가 <b>${att.length}</b>명`:'참가자 없음'}</span>
+      <span class="ev-n">${att.length?`<b>${att.length}</b>명`:'참가자 없음'}</span>
       <span class="ev-r">${mvp?`<span class="ev-mvp">${IC.crown}${esc(dn(mvp))}</span>`:''}${prog}</span></div></button>`;
 }
 function viewFeed(){
