@@ -528,6 +528,20 @@ body::before{background:var(--bg)!important}
 .evc.past .ev-th b{color:var(--ink-2)}
 .evc.past .ev-info,.evc.past .ev-tags i{opacity:.75}
 .evc.past .avs .av{filter:saturate(.3) brightness(.85)}
+.evc.past{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:10px 14px;border-radius:16px}
+.evp-d{display:grid;justify-items:center;min-width:52px;background:#26292C;border-radius:11px;padding:5px 6px;line-height:1.1}
+.evp-d b{font-family:var(--f-sport);font-style:italic;font-weight:900;font-size:16px;color:var(--ink-2)}
+.evp-d span{font-size:10px;color:var(--muted);font-weight:700}
+.evp-m{display:grid;gap:2px;min-width:0}
+.evp-m b{font-weight:900;font-style:italic;font-size:15px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evp-m span{font-size:11.5px;color:var(--muted)}
+.evp-mvp{display:grid;justify-items:center;gap:0;line-height:1.1}
+.evp-mvp svg{width:15px;height:15px;color:var(--gold)}
+.evp-mvp b{font-size:13px;font-weight:900;color:var(--gold);white-space:nowrap}
+.evp-mvp i{font-style:normal;font-family:var(--f-sport);font-weight:900;font-size:9px;letter-spacing:.12em;color:var(--muted)}
+.ev-date i{font-size:10px!important;letter-spacing:0!important;font-family:var(--f-body)!important;font-weight:700!important}
+.ev-date span{letter-spacing:0!important;font-family:var(--f-body)!important;font-size:11px!important}
+.mdate span,.mh-date span{font-family:var(--f-body)!important;letter-spacing:0!important;font-style:normal!important;font-size:10px!important}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -730,10 +744,10 @@ function del(col,id){
 }
 
 /* ---------- helpers ---------- */
-const DOW=['SUN','MON','TUE','WED','THU','FRI','SAT'];
-const DOWK=['일','월','화','수','목','금','토'];
+const DOW=['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+const DOWK=DOW;
 const pd=d=>{const [y,m,dd]=d.split('-').map(Number);return new Date(y,m-1,dd)};
-const fmtK=d=>{const x=pd(d);return `${x.getMonth()+1}월 ${x.getDate()}일 (${DOWK[x.getDay()]})`};
+const fmtK=d=>{const x=pd(d);return `${x.getMonth()+1}월 ${x.getDate()}일 ${DOWK[x.getDay()]}`};
 const dn=id=>{const m=S.members.find(x=>x.id===id);return m?(m.short||m.nick||m.name):'(삭제됨)'};
 const members=()=>S.members.slice().sort((a,b)=>(a.order??99)-(b.order??99)||a.name.localeCompare(b.name,'ko'));
 const seasonMeets=()=>S.meets.filter(m=>(m.date||'').slice(0,4)===String(S.season)).sort((a,b)=>a.date.localeCompare(b.date));
@@ -975,7 +989,7 @@ function loadingView(){
   return `<div class="empty" style="background:none;box-shadow:none"><div class="spin" aria-hidden="true"></div><p class="muted">기록을 불러오는 중…</p></div>`;
 }
 
-const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const MON=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 function evCard(m){
   const ms=meetMatches(m.id),fin=ms.filter(done).length,d=pd(m.date),mvp=mvpOf(m),isT=m.date===TODAY,up=m.date>TODAY;
   const dd=Math.round((pd(m.date)-pd(TODAY))/864e5);
@@ -983,7 +997,10 @@ function evCard(m){
   const att=attOf(m),show=att.slice(0,4);
   const tags=[m.env,m.surface].filter(Boolean);
   const prog=!ms.length?'<span class="ev-s">대진 전</span>':fin===ms.length?`<span class="ev-s done">경기 ${ms.length} 완료</span>`:`<span class="ev-s">경기 <b>${fin}</b>/${ms.length}</span>`;
-  return `<button class="evc ${isT?'today':m.date<TODAY?'past':''}" data-meet="${m.id}">
+  if(m.date<TODAY)return `<button class="evc past" data-meet="${m.id}"><div class="evp-d"><b class="tab-n">${d.getMonth()+1}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
+    <div class="evp-m"><b>${esc(m.title||m.place||'매치데이')}</b><span>${ms.length?`경기 ${fin}${fin<ms.length?'/'+ms.length:''}개`:'기록 없음'}${m.scoring==='league'?' · 리그':''}</span></div>
+    ${mvp?`<span class="evp-mvp">${IC.crown}<b>${esc(dn(mvp))}</b><i>MVP</i></span>`:''}</button>`;
+  return `<button class="evc ${isT?'today':''}" data-meet="${m.id}">
     <div class="ev-top"><div class="ev-l"><div class="ev-date"><span>${MON[d.getMonth()]}</span><b class="tab-n">${pad(d.getDate())}</b><i>${DOW[d.getDay()]}</i></div>${st}</div>
       <div class="ev-main"><div class="ev-th"><b>${esc(m.title||m.place||'매치데이')}</b></div>
         <div class="ev-info">${m.time?`<span>${IC.n_hist}${esc(m.time)}</span>`:''}${m.place?`<span>${IC.pin}${esc(m.place)}</span>`:''}</div>
