@@ -584,6 +584,17 @@ body::before{background:var(--bg)!important}
 .lr .lr-m{width:30px}
 .rk-m svg{width:36px;height:42px}
 .rk .rk-m{width:38px}
+.card.setc{padding:10px 12px;gap:8px}
+.setrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sc2{display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--field);border-radius:12px;padding:4px 4px 4px 12px}
+.sc2>span{font-size:12.5px;font-weight:800;color:var(--ink-2);white-space:nowrap}
+.stp2{display:flex;align-items:center}
+.stp2 button{width:30px;height:30px;border-radius:9px;color:var(--ink-2);font-size:18px}
+.stp2 button:active{background:var(--field-2)}
+.stp2 output{min-width:22px;text-align:center;font-family:var(--f-sport);font-style:italic;font-weight:900;font-size:17px}
+.seed{padding:3px 4px 3px 12px!important}
+.seed .grip{height:36px}
+.seeds{gap:5px!important}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -1168,11 +1179,9 @@ function viewMeet(m){
 
 function settingsCard(){
   const g=S.gen;
-  return `<div class="card"><span class="h1" style="font-size:17px">Settings</span>
-    <div class="field"><span class="lbl">Type</span><div class="seg">${['D','S'].map(t=>`<button data-gtype="${t}" aria-pressed="${g.type===t}">${t==='D'?'복식':'단식'}</button>`).join('')}</div></div>
-    <div class="g2"><div class="field"><span class="lbl">Courts</span><div class="stepper"><button data-step="courts" data-d="-1" aria-label="코트 줄이기">−</button><output>${g.courts}</output><button data-step="courts" data-d="1" aria-label="코트 늘리기">+</button></div></div>
-    <div class="field"><span class="lbl">Rounds</span><div class="stepper"><button data-step="rounds" data-d="-1" aria-label="라운드 줄이기">−</button><output>${g.rounds}</output><button data-step="rounds" data-d="1" aria-label="라운드 늘리기">+</button></div></div></div>
-    <p class="hint">경기 수가 적은 사람부터 코트에 들어가요.</p></div>`;
+  const st=(k,v,l)=>`<div class="sc2"><span>${l}</span><div class="stp2"><button data-step="${k}" data-d="-1" aria-label="${l} 줄이기">−</button><output>${v}</output><button data-step="${k}" data-d="1" aria-label="${l} 늘리기">+</button></div></div>`;
+  return `<div class="card setc"><div class="seg sm">${['D','S'].map(t=>`<button data-gtype="${t}" aria-pressed="${g.type===t}">${t==='D'?'복식':'단식'}</button>`).join('')}</div>
+    <div class="setrow">${st('courts',g.courts,'코트')}${st('rounds',g.rounds,'라운드')}</div></div>`;
 }
 
 function partCard(m){
@@ -1216,8 +1225,9 @@ function viewBuilder(m){
   if(!b.preview){
     let h=`<div class="bhead"><span class="eyebrow">${esc(modeName(b.step))}</span></div>`;
     if(b.step==='seed'){const rm=m.seedRef&&m.seedRef!=='p'?S.meets.find(x=>x.id===m.seedRef):null;
+      h+=settingsCard();
       h+=`<div class="refline">${IC.trophy}<span>참고: <b>${rm?esc(rm.title||rm.place||'매치데이')+' 순위':'시즌 P 포인트 순'}</b></span><button class="mini" data-act="sref-change">바꾸기</button></div><div class="card">${seedList(m)}</div>`;}
-    return h+settingsCard();
+    return b.step==='seed'?h:h+settingsCard();
   }
   let h=head('대진 미리보기','선수 이름을 누르면 다른 선수와 바꿀 수 있어요. 확정하기 전에는 저장되지 않아요.');
   h+=`<div class="row"><button class="btn-ghost" data-act="b-shuffle" style="flex:1">${IC.m_random}다시 섞기</button><button class="btn-ghost" data-act="b-back" style="flex:1">설정 바꾸기</button></div>`;
