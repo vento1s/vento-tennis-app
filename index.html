@@ -542,6 +542,10 @@ body::before{background:var(--bg)!important}
 .ev-date i{font-size:10px!important;letter-spacing:0!important;font-family:var(--f-body)!important;font-weight:700!important}
 .ev-date span{letter-spacing:0!important;font-family:var(--f-body)!important;font-size:11px!important}
 .mdate span,.mh-date span{font-family:var(--f-body)!important;letter-spacing:0!important;font-style:normal!important;font-size:10px!important}
+.secl{display:flex;align-items:center;justify-content:space-between;padding:6px 4px 0}
+.secl>span{display:inline-flex;align-items:center;gap:7px;font-size:15px;font-weight:900;color:var(--ink)}
+.secl>span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 3px rgba(10,143,216,.25)}
+.secl>span.tdy::before{background:var(--gold);box-shadow:0 0 0 3px rgba(255,212,0,.25)}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--field-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{background:var(--card);border-radius:22px;padding:20px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
@@ -1199,7 +1203,7 @@ function viewHome(){
   let h=`<div class="between"><button class="upbar" data-nav="clubs">${IC.back}<span>내 클럽</span><em>${allClubs().length}개</em></button><button class="admpill ${am?'on':''}" data-act="admin-panel">${IC.lock}${am?'관리자 모드':'관리자'}</button></div><div class="club home"><div class="club-top">${clubPic(c)}<div class="club-t"><b>${esc(c.name)}</b>${c.intro?`<span>${esc(c.intro)}</span>`:''}</div><button class="mini" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button></div>
     <div class="kpis"><button data-nav="roster"><span>등록 선수</span><b>${ids.length}<small>명</small></b></button><button data-nav="history"><span>${S.season} 경기</span><b>${played}<small>경기</small></b></button><button data-nav="season"><span>평균 P</span><b>${avg}<small>P</small></b></button></div></div>`;
   const next=sm.find(m=>m.date>=TODAY);const last=sm.filter(m=>m.date<TODAY).slice(-1)[0];const show=next||last;
-  if(show)h+=evCard(show);
+  if(show)h+=`<div class="secl"><span class="${show.date===TODAY?'tdy':''}">${show.date===TODAY?'오늘의 매치데이':next?'다가오는 매치데이':'최근 매치데이'}</span>${next&&show.date!==TODAY?`<button class="mini" data-nav="feed">전체 보기</button>`:''}</div>`+evCard(show);
   const rows=seasonRows('all').filter(r=>r.p>0);
   h+=`<div class="between" style="padding:4px 4px 0"><span class="h1" style="font-size:16px">실시간 랭킹 <span class="cnt-chip">${rows.length}명</span></span><button class="mini" data-nav="season">전체 보기</button></div>`;
   h+=rows.length?`<div class="hlist">${rows.slice(0,5).map((r,i)=>{const ld=lastDelta(r.id);return `<button class="lr" data-member="${r.id}"><span class="lr-n ${i<3?'r'+(i+1):''}">${i===0?IC.crown:i+1}</span>
