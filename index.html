@@ -662,6 +662,17 @@ body::before{background:var(--bg)!important}
 .seasonlink{justify-self:center;gap:8px}
 .seasonlink svg{width:16px;height:16px;color:var(--gold)}
 .seasonlink small{font-size:11px;color:var(--muted);font-style:normal;font-weight:700}
+.ev-foot.open{gap:8px}
+.avs.open{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;padding:2px 2px 2px 0;mask-image:linear-gradient(90deg,#000 88%,transparent);-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);cursor:default}
+.avs.open::-webkit-scrollbar{display:none}
+.avc{display:inline-flex;align-items:center;gap:5px;flex:none;background:var(--field);border:1px solid var(--line);border-radius:999px;padding:2px 10px 2px 2px;animation:avIn .32s cubic-bezier(.2,.9,.25,1) both}
+.avc .av{width:24px;height:24px;font-size:10.5px;margin:0;box-shadow:none}
+.avc b{font-size:12.5px;font-weight:800;color:var(--ink);white-space:nowrap}
+.av-close{flex:none;align-self:center;font-size:12px;font-weight:800;color:var(--blue-t);padding:5px 10px;border-radius:999px;background:rgba(74,136,207,.12);cursor:pointer;white-space:nowrap}
+.av.more{cursor:pointer}
+.av.more:active{background:var(--blue);color:#fff}
+@keyframes avIn{from{opacity:0;transform:translateX(-14px) scale(.9)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.avc{animation:none}}
 .card.setc{padding:10px 12px;gap:8px}
 .setrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .setl{font-size:11.5px;font-weight:800;color:var(--muted);margin-bottom:-2px}
@@ -1283,14 +1294,17 @@ function evCard(m){
   if(m.date<TODAY)return `<button class="evc past" data-meet="${m.id}"><div class="evp-d"><b class="tab-n">${d.getMonth()+1}.${pad(d.getDate())}</b><span>${DOW[d.getDay()]}</span></div>
     <div class="evp-m"><b>${esc(m.title||m.place||'매치데이')}</b><span>${ms.length?`경기 ${fin}${fin<ms.length?'/'+ms.length:''}개`:'기록 없음'}</span></div>
     ${mvp?`<span class="evp-mvp">${IC.crown}<b>${esc(dn(mvp))}</b><i>MVP</i></span>`:''}</button>`;
-  return `<button class="evc ${isT?'today':''}" data-meet="${m.id}">
+  const open=(S.avOpen||{})[m.id];
+  const avs=open?`<span class="avs open" data-act="av-noop">${att.map((id,i)=>`<span class="avc" style="animation-delay:${Math.min(i,12)*28}ms">${avatar(id,false)}<b>${esc(dn(id))}</b></span>`).join('')}<span class="av-close" data-act="av-toggle" data-mid="${m.id}" role="button" aria-label="접기">‹ 접기</span></span>`
+    :`<span class="avs">${show.map(id=>avatar(id,false)).join('')}${att.length>show.length?`<span class="av more" data-act="av-toggle" data-mid="${m.id}" role="button" aria-label="참가 선수 모두 보기">+${att.length-show.length}</span>`:''}</span>`;
+  return `<div class="evc ${isT?'today':''}" data-meet="${m.id}" role="button" tabindex="0">
     <div class="ev-top"><div class="ev-l"><div class="ev-date"><span>${MON[d.getMonth()]}</span><b class="tab-n">${pad(d.getDate())}</b><i>${DOW[d.getDay()]}</i></div>${st}</div>
       <div class="ev-main"><div class="ev-th"><b>${esc(m.title||m.place||'매치데이')}</b></div>
         <div class="ev-info">${m.time?`<span>${IC.n_hist}${esc(m.time)}</span>`:''}${m.place?`<span>${IC.pin}${esc(m.place)}</span>`:''}</div>
         ${tags.length?`<div class="ev-tags">${tags.map(t=>`<i>${esc(t)}</i>`).join('')}</div>`:''}</div></div>
-    <div class="ev-foot"><span class="avs">${show.map(id=>avatar(id,false)).join('')}${att.length>show.length?`<span class="av more">+${att.length-show.length}</span>`:''}</span>
-      <span class="ev-n">${att.length?`<b>${att.length}</b>명`:'참가자 없음'}</span>
-      <span class="ev-r">${mvp?`<span class="ev-mvp">${IC.crown}${esc(dn(mvp))}</span>`:''}${prog}</span></div></button>`;
+    <div class="ev-foot ${open?'open':''}">${avs}
+      ${open?'':`<span class="ev-n">${att.length?`<b>${att.length}</b>명`:'참가자 없음'}</span>`}
+      <span class="ev-r">${mvp?`<span class="ev-mvp">${IC.crown}${esc(dn(mvp))}</span>`:''}${prog}</span></div></div>`;
 }
 function viewFeed(){
   if(S.loading)return loadingView();
@@ -2048,7 +2062,7 @@ function bConfirm(){
 
 document.addEventListener('click',e=>{
   const pv=e.target.closest('[data-pvsw]');if(pv){swapModal(pv.dataset.pvsw);return}
-  const t=e.target.closest('button,[data-act]');if(!t)return;
+  const t=e.target.closest('button,[data-act],[data-meet]');if(!t)return;
   const d=t.dataset;const m=curMeet();
   if(d.swp!==undefined||d.msc!==undefined||d.ap!==undefined||t.id==='c-rm'||t.id==='m-rm'||d.mh!==undefined||d.msd!==undefined||d.mv!==undefined||d.me!==undefined||d.ms!==undefined||d.pick!==undefined||d.ico!==undefined||d.fab!==undefined||d.k!==undefined||d.n!==undefined||d.asel!==undefined)return;
   const NEED=['ko-reset','del-cur-meet','meet-info','club-edit','new','edit-meet','edit-att','build','add-member','clear-empty','del-meet','m-all','m-clr','pin-clear'];
@@ -2111,6 +2125,8 @@ document.addEventListener('click',e=>{
     case 'b-exit':S.build=null;render();break;
     case 'b-back':bBack();break;
     case 'nav-back':goBack(false);break;
+    case 'av-noop':break;
+    case 'av-toggle':{S.avOpen=S.avOpen||{};const k=d.mid;S.avOpen[k]=!S.avOpen[k];render();if(S.avOpen[k]){const el=document.querySelector(`.evc[data-meet="${k}"] .avs.open`);el&&(el.scrollLeft=0)}}break;
     case 'b-preview':case 'b-shuffle':if(m&&S.build.step==='ko'){S.build.preview=koDraw(seedOrder(m));render();if(d.act==='b-preview')toTop();break}
       if(m){const p=buildMatches(m,S.build.step);if(p){S.build.preview=p;render();if(d.act==='b-preview')toTop()}}break;
     case 'b-confirm':bConfirm();break;
@@ -2134,7 +2150,7 @@ document.addEventListener('change',e=>{
     put('matches',{...x,[el.dataset.side==='a'?'sa':'sb']:v});
   }
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('.modal'))closeModal();if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.score)e.target.blur()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('.modal'))closeModal();if(e.key==='Enter'&&e.target.matches&&e.target.matches('.evc[data-meet]')){e.target.click();return}if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.score)e.target.blur()});
 
 /* ---------- seed drag ---------- */
 function moveSeed(id,to,animate){
