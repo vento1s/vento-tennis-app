@@ -587,6 +587,24 @@ body::before{background:var(--bg)!important}
 .seed .rec .wl{font-size:12px!important;gap:3px;vertical-align:0}
 .seg.hseg{padding:3px;border-radius:999px;background:var(--card)}
 .seg.hseg button{padding:5px 13px;font-size:12.5px;border-radius:999px}
+.clubbar{margin:-14px -16px 2px;padding:12px 16px 11px;background:linear-gradient(180deg,#0B2A4D,#0A2240);border-bottom:1px solid rgba(74,136,207,.28);display:grid;gap:10px}
+.cb-top{display:flex;align-items:center;gap:10px;min-width:0}
+.cb-back{width:28px;height:36px;display:grid;place-items:center;color:var(--ink-2);flex:none;margin-left:-6px}
+.cb-back svg{width:20px;height:20px}
+.clubbar .club-ic.sm{width:38px;height:38px;border-radius:11px;background:rgba(74,136,207,.18)}
+.clubbar .club-ic.sm svg{width:21px;height:21px}
+.cb-t{flex:1;min-width:0;display:grid;line-height:1.25}
+.cb-t b{font-weight:900;font-style:italic;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb-t span{font-size:11.5px;color:var(--ink-2);opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb-ic{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;flex:none;color:var(--ink-2);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
+.cb-ic svg{width:14px;height:14px}
+.cb-ic.on{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
+.cb-k{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-2);flex-wrap:wrap}
+.cb-k button{color:inherit;white-space:nowrap}
+.cb-k b{font-family:var(--f-sport);font-style:italic;font-weight:900;font-size:15px;color:var(--ink);margin:0 1px}
+.cb-k i{width:1px;height:11px;background:rgba(255,255,255,.18)}
+.cb-k em{margin-left:auto;font-style:normal;font-size:10.5px;font-weight:800;background:var(--gold);color:var(--on-gold);padding:2px 7px;border-radius:999px}
+@media (min-width:700px) and (min-height:620px){.clubbar{margin-left:-16px;margin-right:-16px}}
 .card.setc{padding:10px 12px;gap:8px}
 .setrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sc2{display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--field);border-radius:12px;padding:4px 4px 4px 12px}
@@ -1297,8 +1315,9 @@ function viewHome(){
   const c=clubInfo(S.clubId);const sm=seasonMeets();const played=seasonMatches().filter(done).length;
   const ids=S.members.map(m=>m.id);const avg=ids.length?Math.round(ids.reduce((t,id)=>t+pOf(id),0)/ids.length):P0;
   const am=cfg().pin&&isAdmin();
-  let h=`<div class="between"><button class="upbar" data-nav="clubs">${IC.back}<span>내 클럽</span><em>${allClubs().length}개</em></button><button class="admpill ${am?'on':''}" data-act="admin-panel">${IC.lock}${am?'관리자 모드':'관리자'}</button></div><div class="club home"><div class="club-top">${clubPic(c)}<div class="club-t"><b>${esc(c.name)}</b>${c.intro?`<span>${esc(c.intro)}</span>`:''}</div><button class="mini" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button></div>
-    <div class="kpis"><button data-nav="roster"><span>등록 선수</span><b>${ids.length}<small>명</small></b></button><button data-nav="history"><span>${S.season} 경기</span><b>${played}<small>경기</small></b></button><button data-nav="season"><span>평균 P</span><b>${avg}<small>P</small></b></button></div></div>`;
+  let h=`<header class="clubbar"><div class="cb-top"><button class="cb-back" data-nav="clubs" aria-label="내 클럽 목록">${IC.back}</button>${clubPic(c,'sm')}<div class="cb-t"><b>${esc(c.name)}</b>${c.intro?`<span>${esc(c.intro)}</span>`:''}</div>
+    <button class="cb-ic" data-act="club-edit" aria-label="클럽 정보 수정">${IC.edit}</button><button class="cb-ic ${am?'on':''}" data-act="admin-panel" aria-label="${am?'관리자 모드':'관리자'}">${IC.lock}</button></div>
+    <div class="cb-k"><button data-nav="roster">선수 <b>${ids.length}</b>명</button><i></i><button data-nav="history">${S.season} 경기 <b>${played}</b></button><i></i><button data-nav="season">평균 <b>${avg}</b>P</button>${am?'<em>관리자 모드</em>':''}</div></header>`;
   const next=sm.find(m=>m.date>=TODAY);const last=sm.filter(m=>m.date<TODAY).slice(-1)[0];const show=next||last;
   if(show)h+=`<div class="secl"><span class="${show.date===TODAY?'tdy':''}">${show.date===TODAY?'오늘의 매치데이':next?'다가오는 매치데이':'최근 매치데이'}</span>${next&&show.date!==TODAY?`<button class="mini" data-nav="feed">전체 보기</button>`:''}</div>`+evCard(show);
   const rt=S.rankType==='D'?'D':'S';const rows=seasonRows(rt).filter(r=>r.p>0);
