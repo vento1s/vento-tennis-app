@@ -960,7 +960,7 @@ function tally(matches,ids,type,meets){
   });
   return Object.values(t).sort((a,b)=>b.w-a.w||rate(b)-rate(a)||(b.gf-b.ga)-(a.gf-a.ga)||b.att-a.att);
 }
-const seasonStats=type=>tally(seasonMatches(),members().map(m=>m.id),type,seasonMeets());
+const seasonStats=type=>tally(seasonMatches(),members().map(m=>m.id),type,seasonMeets().filter(m=>m.date<=TODAY));
 function seasonRows(type){
   const rows=seasonStats(type);
   return rows.sort((a,b)=>((b.p>0)-(a.p>0))||(lgPts(b)-lgPts(a))||((b.gf-b.ga)-(a.gf-a.ga))||rate(b)-rate(a)||dn(a.id).localeCompare(dn(b.id),'ko'));
@@ -1587,7 +1587,7 @@ function pTags(m){const t=[];if(m.years!=null&&m.years!=='')t.push(`구력 ${m.y
 function viewPlayers(){
   if(S.loading)return loadingView();
   const sm=seasonMeets();const done6=sm.filter(m=>m.date<=TODAY).length||0;
-  const att={},last={};sm.forEach(mt=>attOf(mt).forEach(id=>{att[id]=(att[id]||0)+1;if(mt.date<=TODAY&&(!last[id]||mt.date>last[id]))last[id]=mt.date}));
+  const att={},last={};sm.forEach(mt=>attOf(mt).forEach(id=>{if(mt.date<=TODAY)att[id]=(att[id]||0)+1;if(mt.date<=TODAY&&(!last[id]||mt.date>last[id]))last[id]=mt.date}));
   S.meets.forEach(mt=>attOf(mt).forEach(id=>{if(mt.date<=TODAY&&(!last[id]||mt.date>last[id]))last[id]=mt.date}));
   let list=members();
   if(S.pSort==='att')list=list.slice().sort((a,b)=>(att[b.id]||0)-(att[a.id]||0));
