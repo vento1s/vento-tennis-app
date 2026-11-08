@@ -1271,7 +1271,7 @@ function koDraw(order){
 }
 const koId=(mid,r,i,third)=>third?`${mid}_ko3p`:`${mid}_ko${r}_${i}`;
 function koOrder(B){if(!B)return {};const R=koRounds(B.size),L=[];
-  for(let r=0;r<R;r++){const n=B.size/Math.pow(2,r+1);for(let i=0;i<n;i++){if(r===0&&(!B.pos[2*i]||!B.pos[2*i+1]))continue;L.push({k:r+'|'+i,rd:B.qc?koRC(B,r,i)[0]:(B.base||0)+r+1,r,i})}}
+  for(let r=0;r<R;r++){const n=B.size/Math.pow(2,r+1);for(let i=0;i<n;i++){if(r===0&&!B.all&&(!B.pos[2*i]||!B.pos[2*i+1]))continue;L.push({k:r+'|'+i,rd:B.qc?koRC(B,r,i)[0]:(B.base||0)+r+1,r,i})}}
   if(B.third&&R>=2)L.push({k:'t',rd:B.qc?koRC(B,R-1,1,true)[0]:(B.base||0)+R,r:R-1,i:-1});
   L.sort((x,y)=>x.rd-y.rd||x.r-y.r||x.i-y.i);const o={};L.forEach((x,j)=>o[x.k]=j+1);return o}
 const koNo=(m,x)=>{if(!x||!x.ko||!m||!m.bracket||x.ko.place!=null)return null;return koOrder(m.bracket)[x.ko.third?'t':x.ko.r+'|'+x.ko.i]||null};
@@ -1349,7 +1349,7 @@ function koTree(m,B,live,edit){
       const bye=!edit&&r===0&&(!a||!b)&&(a||b);
       const fin=x&&done(x);const w=fin?koWin(x):bye?(a||b):null;
       const span=Math.pow(2,r+1);
-      boxes+=`<div class="kt-m ${bye?'bye':''}" style="grid-row:${i*span+1}/span ${span}">${ord[r+'|'+i]&&!bye?`<div class="kt-ch"><b>${ord[r+'|'+i]}경기</b>${x&&x.court?` · ${x.court}번 코트`:''}</div>`:''}${cell(a,w&&w===a,fin?x.sa:null,seedNo(a),r===0&&!fin?2*i:null)}${cell(bye&&!b?null:b,w&&w===b,fin?x.sb:null,seedNo(b),r===0&&!fin?2*i+1:null)}${bye?'<span class="kt-bye">부전승</span>':''}</div>`;
+      boxes+=`<div class="kt-m ${bye?'bye':''}" style="grid-row:${i*span+1}/span ${span}">${ord[r+'|'+i]&&!bye?`<div class="kt-ch"><b>${ord[r+'|'+i]}경기</b>${(()=>{const c=x?x.court:(B.cn&&B.cn.length?koRC(B,r,i)[1]:null);return c?` · ${c}번 코트`:''})()}</div>`:''}${cell(a,w&&w===a,fin?x.sa:null,seedNo(a),r===0&&!fin?2*i:null)}${cell(bye&&!b?null:b,w&&w===b,fin?x.sb:null,seedNo(b),r===0&&!fin?2*i+1:null)}${bye?'<span class="kt-bye">부전승</span>':''}</div>`;
     }
     cols+=`<div class="kt-c"><span class="kt-h">${koName(P,r)}</span><div class="kt-g" style="grid-template-rows:repeat(${P},minmax(25px,auto))">${boxes}</div></div>`;
   }
@@ -1357,7 +1357,7 @@ function koTree(m,B,live,edit){
   cols+=`<div class="kt-c kt-w"><span class="kt-h">우승</span><div class="kt-g" style="grid-template-rows:repeat(${P},minmax(25px,auto))"><div class="kt-cup ${ch?'on':''}" style="grid-row:1/span ${P}">${IC.trophy}<b>${ch?esc(dn(ch)):'?'}</b></div></div></div>`;
   let third='';
   if(live&&B.third&&R>=2){const [a,b]=koPair(m,R-1,1,true),x=koMatch(m.id,R-1,1,true),fin=x&&done(x),w=fin?koWin(x):null;
-    third=`<div class="kt-3"><span class="kt-h">3·4위전</span><div class="kt-m">${ord.t?`<div class="kt-ch"><b>${ord.t}경기</b>${x&&x.court?` · ${x.court}번 코트`:''}</div>`:''}${cell(a,w&&w===a,fin?x.sa:null,seedNo(a))}${cell(b,w&&w===b,fin?x.sb:null,seedNo(b))}</div></div>`}
+    third=`<div class="kt-3"><span class="kt-h">3·4위전</span><div class="kt-m">${ord.t?`<div class="kt-ch"><b>${ord.t}경기</b>${(()=>{const c=x?x.court:(B.cn&&B.cn.length?koRC(B,R-1,1,true)[1]:null);return c?` · ${c}번 코트`:''})()}</div>`:''}${cell(a,w&&w===a,fin?x.sa:null,seedNo(a))}${cell(b,w&&w===b,fin?x.sb:null,seedNo(b))}</div></div>`}
   return `<div class="kt-wrap"><div class="kt" style="grid-template-columns:repeat(${R},minmax(82px,1fr)) 56px">${cols}</div>${third}</div>`;
 }
 IC.m_ko=IC.trophy;IC.m_blank=IC.edit;IC.dots='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
@@ -1418,7 +1418,7 @@ function renderHead(){
 
 /* ---------- views ---------- */
 function loadingView(){
-  if(S.slow)return `<div class="empty"><p class="h1" style="font-size:17px">CONNECTING…</p><p class="muted">기록을 불러오는 데 시간이 걸리고 있어요.<br>네트워크를 확인한 뒤 다시 시도해 주세요.</p><button class="btn-blue" data-act="reload">다시 시도</button></div>`;
+  if(S.slow)return `<div class="empty"><p class="h1" style="font-size:17px">CONNECTING…</p><p class="muted">기록을 불러오는 데 시간이 걸리고 있어요.<br>네트워크를 확인한 뒤 다시 시도해 주세요.</p>${S.sbErr?`<p class="hint" style="word-break:break-all">오류: ${esc(S.sbErr)}</p>`:''}<button class="btn-blue" data-act="reload">다시 시도</button></div>`;
   return `<div class="empty" style="background:none;box-shadow:none"><div class="spin" aria-hidden="true"></div><p class="muted">기록을 불러오는 중…</p></div>`;
 }
 
@@ -1605,7 +1605,7 @@ function viewBuilder(m){
   if(b.step==='pick'){
     const inL=new Set(b.list),M=Object.fromEntries(members().map(x=>[x.id,x])),ord=byRank(members().map(x=>x.id)).map(id=>M[id]),top=ord.filter(x=>inL.has(x.id)),rest=ord.filter(x=>!inL.has(x.id));
     const n=b.sel.length;
-    let h=`<div class="bhead"><p class="big">누가 참가하나요?</p></div>`;
+    let h='';
     h+=`<div class="secl"><span>참가 선수 <em>${n}명</em></span><button class="mini" data-act="pk-clr">모두 해제</button></div>`;
     h+=`<div class="card">${top.length||true?`<div class="players g5">${top.map(x=>`<button class="pl ${x.guest?'gst':''}" data-psel="${x.id}" aria-pressed="${b.sel.includes(x.id)}">${rbW(x.id)}</button>`).join('')}<button class="pl addc" data-act="pk-add" aria-label="선수 추가">+</button></div>`:`<p class="hint" style="margin:0">아직 참가자가 없어요. 아래에서 회원을 추가해 주세요.</p>`}</div>`;
     if(!b.setup)b.setup=defSetup(m);const st=b.setup,f=fmtOf(m),mx=Math.max(8,...st.courts);
@@ -1649,8 +1649,8 @@ function viewBuilder(m){
     const B=b.blank,P=B.size,used=new Set(B.pos.filter(Boolean)),left=byRank(att.filter(id=>!used.has(id)));
     let h='';
     h+=`<div class="dpool card" id="dpool"><div class="between"><span class="lbl">남은 선수 ${left.length}명 / 참가 ${att.length}명</span><span class="ddbadge">DRAG &amp; DROP</span></div>${left.length?`<div class="players">${left.map(id=>`<button class="pl dp ${b.pick===id?'pk':''}" data-dp="${id}" aria-pressed="true">${rbW(id)}</button>`).join('')}</div>`:`<span class="hint" style="margin:0">모든 선수를 배치했어요 👍</span>`}</div>`;
-    h+=`<div class="card kcard kedit">${koTree(m,{size:P,pos:B.pos,seeds:[]},false,true)}</div>`;
-    return h+`<div class="row"><button class="btn-ghost" data-act="blank-clear" style="flex:1">전체 비우기</button><button class="btn-ghost" data-act="blank-fill" style="flex:1">남은 선수 무작위로</button></div>`;
+    h+=`<div class="card kcard kedit">${koTree(m,{size:P,pos:B.pos,seeds:[],cn:(m.courts||[]).slice(),all:true,third:B.third!==false},false,true)}</div>`;
+    return h+`<button class="btn-ghost" data-act="blank-fill" style="width:100%">남은 선수 무작위로</button>`;
   }
   if(b.step==='manual'){
     const man=S.man;const maxCourt=Math.max(2,S.gen.courts);
@@ -2784,12 +2784,14 @@ const SB_TABLE='tennis_docs';
 const SB_COLS=['members','meets','matches','config','clubs'];
 async function sbConnect(){
   const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-  const sb=createClient(SB_URL,SB_KEY,{auth:{persistSession:false}});
+  // 일부 미리보기 화면은 Headers 객체를 넘기지 못해서, 일반 객체로 바꿔서 보내요
+  const plainFetch=(url,opt={})=>{const o={...opt};if(o.headers instanceof Headers)o.headers=Object.fromEntries(o.headers.entries());delete o.signal;return fetch(url,o)};
+  const sb=createClient(SB_URL,SB_KEY,{auth:{persistSession:false},global:{fetch:plainFetch}});
   const OUT=LS+'-outbox';
   let outbox=[];try{outbox=JSON.parse(localStorage.getItem(OUT)||'[]')}catch(e){}
   const saveOut=()=>{try{localStorage.setItem(OUT,JSON.stringify(outbox))}catch(e){}};
   const M={};SB_COLS.forEach(c=>M[c]={});
-  const L={};let ready=null,chan=null,flushing=false,loaded=false;
+  const L={};let ready=null,chan=null,flushing=false,loaded=false,retryT=null;
   // 화면에 보여줄 값 = 서버 값 + 아직 못 올린 내 변경
   const view=col=>{const v={...M[col]};outbox.forEach(o=>{if(o.col!==col)return;if(o.op==='set')v[o.id]=o.data;else delete v[o.id]});return v};
   const emit=col=>{if(!loaded)return;const v=view(col);const snap={docs:Object.keys(v).map(id=>({id,data:()=>v[id]}))};(L[col]||[]).forEach(f=>f.cb(snap))};
@@ -2831,13 +2833,13 @@ async function sbConnect(){
       else{const n=p.new||{};if(M[n.col]){M[n.col][n.id]=n.data;emit(n.col)}}
     }).subscribe(st=>{if(st==='SUBSCRIBED'&&loaded)fetchAll().catch(()=>{})});   // 다시 연결되면 놓친 변경을 다시 받아요
   }
-  const start=()=>{if(!ready)ready=fetchAll().then(()=>{listen();flush()}).catch(e=>{ready=null;throw e});return ready};
+  const start=()=>{if(!ready)ready=fetchAll().then(()=>{listen();flush()}).catch(e=>{ready=null;if(!permanent(e)&&!retryT)retryT=setTimeout(()=>{retryT=null;start().catch(()=>{})},3000);throw e});return ready};
   const resync=()=>{flush();if(loaded)fetchAll().catch(()=>{})};
   window.addEventListener('online',resync);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')resync()});
   return {sb:true,collection(col){return {
     doc(id){return {set:data=>enqueue({op:'set',col,id,data}),delete:()=>enqueue({op:'del',col,id})}},
-    onSnapshot(cb,err){(L[col]=L[col]||[]).push({cb});start().then(()=>emit(col),e=>err&&err({code:'unavailable',e}))}
+    onSnapshot(cb,err){(L[col]=L[col]||[]).push({cb});start().then(()=>emit(col),e=>err&&err({code:permanent(e)?'failed':'unavailable',message:String((e&&(e.message||e.code))||e||'')}))}
   }}};
 }
 /* 공유 저장소에 없는 기록을 채워요: 앱에 들어 있는 기본 기록 + 이 기기에 남아 있던 기록 (기기마다 한 번) */
@@ -2876,6 +2878,9 @@ async function init(){
       if(db.sb&&got.members&&got.meets&&got.matches&&got.config&&got.clubs)sbSeedIfEmpty();
       saveCache();render();
     },e=>{
+      S.sbErr=(e&&e.message)||'';
+      if(db.sb){if(col!=='members')return;if(e&&e.code==='unavailable'){S.slow=true;clearTimeout(slowT);render();return}
+        S.loading=false;S.slow=false;render();toast('Supabase 연결 오류: '+S.sbErr);return}
       if(e&&e.code==='unavailable'){setTimeout(()=>subscribe(col),1500);return}
       got[col]=1;S.loading=false;toast('기록을 불러오지 못했어요. 다시 시도해 주세요.');render();
     });
