@@ -2840,15 +2840,18 @@ async function sbConnect(){
     onSnapshot(cb,err){(L[col]=L[col]||[]).push({cb});start().then(()=>emit(col),e=>err&&err({code:'unavailable',e}))}
   }}};
 }
-/* 공유 저장소가 처음 비어 있으면: 이 기기에 있던 기록(없으면 기본 데이터)을 올려요 */
+/* 공유 저장소에 없는 기록을 채워요: 앱에 들어 있는 기본 기록 + 이 기기에 남아 있던 기록 (기기마다 한 번) */
 function sbSeedIfEmpty(){
   if(S._sbSeed)return;S._sbSeed=1;
-  if(RAW.members.length||RAW.meets.length||S.config.length)return;
-  let src=null;try{src=JSON.parse(localStorage.getItem(LS)||'null')}catch(e){}
-  if(!src||!(src.members||[]).length)src=SEED;
-  ['members','meets','matches'].forEach(c=>(src[c]||[]).forEach(x=>put(c,x)));
-  (src.config||[]).forEach(x=>put('config',x));(src.clubs||[]).forEach(x=>put('clubs',x));
-  toast('공유 저장소에 기존 기록을 올렸어요.');
+  const FLAG=LS+'-sbmerge-'+SEEDV;let did='';try{did=localStorage.getItem(FLAG)||''}catch(e){}
+  if(did)return;
+  const read=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
+  const srcs=[SEED,read(LS),S._bootCache].filter(Boolean);
+  const have={members:new Set(RAW.members.map(x=>x.id)),meets:new Set(RAW.meets.map(x=>x.id)),matches:new Set(RAW.matches.map(x=>x.id)),config:new Set(S.config.map(x=>x.id)),clubs:new Set(S.clubs.map(x=>x.id))};
+  let n=0;
+  srcs.forEach(src=>Object.keys(have).forEach(c=>(src[c]||[]).forEach(x=>{if(x&&x.id&&!have[c].has(x.id)){have[c].add(x.id);put(c,x);n++}})));
+  try{localStorage.setItem(FLAG,'1')}catch(e){}
+  if(n)toast(`빠져 있던 기록 ${n}개를 공유 저장소에 올렸어요.`);
 }
 
 /* ---------- boot ---------- */
@@ -2856,6 +2859,7 @@ async function init(){
   render();
   let db=null;
   // show the last synced copy right away while the shared store connects
+  try{S._bootCache=JSON.parse(localStorage.getItem(CACHE)||'null')}catch(e){}
   if(loadCache()){S.loading=false;render()}
   const slowT=setTimeout(()=>{if(S.loading){S.slow=true;render()}},8000);
   const tmo=ms=>new Promise(r=>setTimeout(()=>r(null),ms));
